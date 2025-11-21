@@ -1,7 +1,7 @@
 
 import { useRef, useCallback } from "react";
 import axios from "axios";
-
+import { authHeader } from "../services/AuthService";
 export default function useKeystrokeCapture() {
   const startTimeRef = useRef(null);
   const keyCountsRef = useRef(0);
@@ -30,9 +30,8 @@ export default function useKeystrokeCapture() {
     const typingSpeed = duration > 0 ? (keyCountsRef.current / duration) : 0;
     const avgHold = holdTimes.current.length ? (holdTimes.current.reduce((a,b)=>a+b,0) / holdTimes.current.length) : 0;
     const backspaceRate = (keyCountsRef.current === 0) ? 0 : (backspaceCountRef.current / keyCountsRef.current) * 100;
-    const rawSample = ""; // you can fill with captured text if needed
-
-    // reset
+    const rawSample = ""; 
+   
     startTimeRef.current = null;
     keyCountsRef.current = 0;
     backspaceCountRef.current = 0;
@@ -44,16 +43,19 @@ export default function useKeystrokeCapture() {
 
   const sendToServer = useCallback(async (features) => {
     try {
-      // prefer baseURL via env in real app; using full URL for simplicity
+     
       await axios.post("http://localhost:8080/keystroke/log", {
-        userId: 1,
+       
         typingSpeed: features.typingSpeed,
         avgKeyHold: features.avgHold,
         backspaceRate: features.backspaceRate,
         rawSample: features.rawSample
-      });
+      }, {
+      headers: { "Content-Type": "application/json", ...authHeader() }
+    });
     } catch (err) {
-      console.error("Failed to send keystroke", err);
+     console.error("send failed", err?.response?.data || err.message);
+    throw err;
     }
   }, []);
 

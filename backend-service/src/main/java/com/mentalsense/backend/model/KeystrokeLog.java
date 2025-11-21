@@ -4,6 +4,7 @@ import jakarta.persistence.*;
 import java.time.Instant;
 
 @Entity
+@Table(name="keystroke_log")
 public class KeystrokeLog {
 
     @Id
@@ -14,6 +15,7 @@ public class KeystrokeLog {
     private double typingSpeed;
     private double avgKeyHold;
     private double backspaceRate;
+    @Column(length=4000)
     private String rawSample;
 
     private Instant createdAt = Instant.now();

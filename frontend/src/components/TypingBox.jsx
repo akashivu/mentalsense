@@ -1,6 +1,8 @@
-// frontend/src/components/TypingBox.jsx
+
 import React, { useState } from "react";
 import useKeystrokeCapture from "../hooks/useKeystrokeCapture";
+import { authHeader } from "../services/AuthService";
+
 
 export default function TypingBox() {
   const [text, setText] = useState("");
