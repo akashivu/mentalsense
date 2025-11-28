@@ -2,6 +2,7 @@ package com.mentalsense.backend.model;
 
 import jakarta.persistence.*;
 import java.time.Instant;
+import java.util.List;
 
 @Entity
 @Table(name="keystroke_log")
@@ -17,6 +18,7 @@ public class KeystrokeLog {
     private double backspaceRate;
     @Column(length=4000)
     private String rawSample;
+    private Double stressScore;
 
     private Instant createdAt = Instant.now();
 
@@ -66,5 +68,15 @@ public class KeystrokeLog {
 
     public Instant getCreatedAt() {
         return createdAt;
+    }
+    public Double getStressScore() {
+        return stressScore;
+    }
+
+    public void setStressScore(Double stressScore) {
+        this.stressScore = stressScore;
+    }
+
+    public void setEventTimes(List<Integer> eventTimes) {
     }
 }

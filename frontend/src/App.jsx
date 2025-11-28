@@ -3,6 +3,8 @@ import React from "react";
 import TypingBox from "./components/TypingBox";
 import Register from "./pages/Register";
 import Login from "./pages/Login";
+import TrendContainer from "./components/TrendContainer";
+import TrendGraph from "./components/TrendGraph";
 
 function App() {
   return (
@@ -11,6 +13,8 @@ function App() {
       <TypingBox />
       <Register/>
       <Login/>
+      <TrendContainer userId={1} />
+      
     </div>
   );
 }
