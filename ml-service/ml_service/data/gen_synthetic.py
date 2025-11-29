@@ -8,10 +8,7 @@ from ml_service.utils.keystroke_features import dataframe_from_event_list
 OUT = Path(__file__).resolve().parents[1] / "synthetic_keystrokes.csv"
 
 def make_sample(label):
-    """
-    Generate a synthetic keystroke sample.
-    label = 0 (low stress), 1 (high stress)
-    """
+   
     n = random.randint(20, 120)  
     t = 0.0
     samples = []

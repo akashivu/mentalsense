@@ -3,12 +3,7 @@ import numpy as np
 import pandas as pd
 
 def extract_features_from_raw(event_times, key_events=None, raw_text=""):
-    """
-    event_times: list of tuples (key, down_ts, up_ts)
-    Returns dict of features:
-      typing_speed, avg_hold_ms, std_hold_ms, avg_interkey_ms,
-      backspace_rate, punctuation_rate, uppercase_rate, digit_rate, char_count
-    """
+   
 
     if not event_times:
         return {
@@ -81,11 +76,7 @@ def extract_features_from_raw(event_times, key_events=None, raw_text=""):
 
 
 def dataframe_from_event_list(samples):
-    """
-    samples: [
-      { 'event_times': [...], 'raw_text': "...", 'label': 0/1 }
-    ]
-    """
+    
     rows = []
     for s in samples:
         feats = extract_features_from_raw(

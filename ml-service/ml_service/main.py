@@ -7,14 +7,27 @@ import logging
 import joblib
 import numpy as np
 from pydantic import BaseModel
-from tensorflow.keras.models import load_model
 from fastapi import FastAPI, HTTPException, APIRouter, Request
 from fastapi.responses import JSONResponse
 
 from ml_service.utils.keystroke_features import extract_features_from_raw
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from ml_service.nlp.roberta_emotion import analyze_text
 
 app = FastAPI(title="MentalSense ML Service")
 
+class TextRequest(BaseModel):
+    text: str
+
+@app.post("/predict/emotion_text")
+def predict_emotion_text(payload: TextRequest):
+    try:
+        res = analyze_text(payload.text)
+        return {"ok": True, "result": res}
+    except Exception as e:
+       
+        raise HTTPException(status_code=500, detail=str(e))
 
 lstm = None
 iso = None
