@@ -5,7 +5,7 @@ import Register from "./pages/Register";
 import Login from "./pages/Login";
 import TrendContainer from "./components/TrendContainer";
 import TrendGraph from "./components/TrendGraph";
-
+import Dashboard from "./pages/Dashboard";
 function App() {
   return (
     <div style={{ padding: 20 }}>
@@ -14,7 +14,7 @@ function App() {
       <Register/>
       <Login/>
       <TrendContainer userId={1} />
-      
+        <Dashboard />
     </div>
   );
 }
