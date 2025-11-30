@@ -1,4 +1,4 @@
-// src/components/TypingBox.jsx
+
 import React, { useState } from "react";
 import useKeystrokeCapture from "../hooks/useKeystrokeCapture";
 import { authHeader } from "../services/AuthService";
@@ -11,22 +11,22 @@ export default function TypingBox({ userId = 1 }) {
 
   const handleSubmit = async (e) => {
   e.preventDefault();
-  // pass the current textarea text to feature getter
+  
   const features = getFeaturesAndReset(text.trim());
-  // if user didn't type anything, warn
+ 
   if (!features.raw_text || features.raw_text.length < 3) {
     alert("Please type a meaningful sentence before sending.");
     return;
   }
 
-  // guard: ensure userId exists
+ 
   if (userId === undefined || userId === null) {
     alert("User id not available. Please login or retry.");
     return;
   }
 
   try {
-    await sendToServer(features, userId);   // <-- pass userId here
+    await sendToServer(features, userId);   
     setText("");
     alert("Keystroke features sent!");
   } catch (err) {
@@ -34,7 +34,7 @@ export default function TypingBox({ userId = 1 }) {
   }
 };
 
-  // keep your baseline logic; ensure you import axios at top (added)
+  
   async function onNewSample(features) {
     setSamples(prev => {
       const arr = [...prev, features];

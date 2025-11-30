@@ -12,7 +12,7 @@ import {
   Filler
 } from "chart.js";
 
-// Register required pieces (fixes "linear is not a registered scale" error)
+
 ChartJS.register(
   LineElement,
   CategoryScale,

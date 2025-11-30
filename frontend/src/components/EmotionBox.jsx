@@ -1,15 +1,55 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
+
 
 export default function EmotionBox({ onNewPrediction }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  const submit = async (e) => {
-    e && e.preventDefault();
+ 
+  const eventTimesRef = useRef([]); 
+  const keyDownMapRef = useRef({}); 
 
+  const nowMs = () => new Date().getTime();
+
+  
+  const handleKeyDown = (e) => {
+    const k = e.key;
+    
+    if (k.length === 1 || k === "Backspace" || k === "Enter" || k === "Tab") {
+      const t = nowMs();
+      
+      const id = `${k}_${t}`;
+      keyDownMapRef.current[id] = t;
+     
+      eventTimesRef.current.push([k, t, null, id]);
+    }
+  };
+
+ 
+  const handleKeyUp = (e) => {
+    const k = e.key;
+    const t = nowMs();
+   
+    for (let i = eventTimesRef.current.length - 1; i >= 0; i--) {
+      const row = eventTimesRef.current[i];
+      if (row[0] === k && row[2] === null) {
+        row[2] = t;
+        break;
+      }
+    }
+  };
+
+ 
+  const resetKeystrokeCapture = () => {
+    eventTimesRef.current = [];
+    keyDownMapRef.current = {};
+  };
+
+  const submit = async (e) => {
+    if (e) e.preventDefault();
     if (!text || text.trim().length < 3) {
       return alert("Please enter at least a short sentence.");
     }
@@ -18,21 +58,53 @@ export default function EmotionBox({ onNewPrediction }) {
     setResult(null);
 
     try {
+     
+      const rawEvents = eventTimesRef.current
+        .filter((r) => r[1] != null && r[2] != null)
+        .map((r) => [r[0], r[1], r[2]]);
+
+      const payload = {
+        raw_text: text,
+      };
+
+      if (rawEvents.length > 0) {
+        payload.event_times = rawEvents;
+      }
+
       const res = await axios.post(
-        "http://localhost:8080/emotion/text",
-        { text },
-        { headers: { "Content-Type": "application/json", ...authHeader() } }
+        "http://localhost:8080/predict/combined",
+        payload,
+        { headers: { "Content-Type": "application/json", ...authHeader() }, timeout: 15000 }
       );
 
-      // normalized payload
-      const payload = res.data && res.data.result ? res.data.result : res.data;
+      const data = res.data;
 
-      setResult(payload);
+      
+      
+      const combinedScore = data?.combined_score ?? null;
+      const textMetrics = data?.text_metrics ?? null;
+      const keystrokeScore = data?.keystroke_score ?? null;
+      const predictionId = data?.prediction_id ?? data?.id ?? null;
 
-      if (onNewPrediction) onNewPrediction(payload);
+      const timestamp = new Date().toISOString();
 
+      const out = {
+        combined_score: combinedScore,
+        text_metrics: textMetrics,
+        keystroke_score: keystrokeScore,
+        prediction_id: predictionId,
+        raw_text: text,
+        ts: timestamp,
+      };
+
+      setResult(out);
+      if (onNewPrediction) onNewPrediction(out);
+
+     
       setText("");
+      resetKeystrokeCapture();
     } catch (err) {
+      console.error(err);
       const msg = err.response?.data?.error || "Failed to analyze text. Try again.";
       alert(msg);
     } finally {
@@ -43,10 +115,7 @@ export default function EmotionBox({ onNewPrediction }) {
   return (
     <div className="w-full max-w-3xl bg-white rounded-lg shadow-sm border p-5">
       <form onSubmit={submit} className="space-y-3">
-        <label
-          htmlFor="emotionText"
-          className="block text-sm font-medium text-slate-700"
-        >
+        <label htmlFor="emotionText" className="block text-sm font-medium text-slate-700">
           How are you feeling?
         </label>
 
@@ -54,6 +123,8 @@ export default function EmotionBox({ onNewPrediction }) {
           id="emotionText"
           value={text}
           onChange={(e) => setText(e.target.value)}
+          onKeyDown={handleKeyDown}
+          onKeyUp={handleKeyUp}
           placeholder="Write a sentence about how you feel..."
           rows={4}
           maxLength={800}
@@ -69,20 +140,8 @@ export default function EmotionBox({ onNewPrediction }) {
             {loading ? (
               <>
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle
-                    className="opacity-25"
-                    cx="12"
-                    cy="12"
-                    r="10"
-                    stroke="currentColor"
-                    strokeWidth="4"
-                    fill="none"
-                  />
-                  <path
-                    className="opacity-75"
-                    fill="currentColor"
-                    d="M4 12a8 8 0 018-8v8z"
-                  />
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                 </svg>
                 <span>Analyzing…</span>
               </>
@@ -93,7 +152,10 @@ export default function EmotionBox({ onNewPrediction }) {
 
           <button
             type="button"
-            onClick={() => setText("")}
+            onClick={() => {
+              setText("");
+              resetKeystrokeCapture();
+            }}
             className="px-3 py-2 border rounded-md text-sm hover:bg-slate-50"
           >
             Clear
@@ -106,31 +168,27 @@ export default function EmotionBox({ onNewPrediction }) {
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-700">
               <span className="font-semibold">Predicted:</span>{" "}
-              <span className="capitalize">{result.label}</span>
+              <span className="capitalize">{result.text_metrics?.label ?? "—"}</span>
             </div>
 
             <div className="text-sm">
-              <span className="text-slate-600">Stress:</span>{" "}
+              <span className="text-slate-600">Combined:</span>{" "}
               <span
                 className={`font-semibold ${
-                  result.stress_score > 0.66
-                    ? "text-red-600"
-                    : result.stress_score > 0.33
-                    ? "text-amber-600"
-                    : "text-green-600"
+                  result.combined_score > 0.66 ? "text-red-600" : result.combined_score > 0.33 ? "text-amber-600" : "text-green-600"
                 }`}
               >
-                {Math.round((result.stress_score ?? 0) * 100)}%
+                {result.combined_score != null ? `${Math.round(result.combined_score * 100)}%` : "—"}
               </span>
             </div>
           </div>
 
+          <div className="mt-2 text-xs text-slate-600">Keystroke score: {result.keystroke_score != null ? Math.round(result.keystroke_score * 100) + "%" : "—"}</div>
+
           <details className="mt-3">
-            <summary className="text-xs text-slate-600 cursor-pointer">
-              Show per-class scores
-            </summary>
+            <summary className="text-xs text-slate-600 cursor-pointer">Show text metrics</summary>
             <pre className="mt-2 text-xs bg-white p-3 rounded-md border overflow-auto max-h-48">
-              {JSON.stringify(result.scores, null, 2)}
+              {JSON.stringify(result.text_metrics ?? {}, null, 2)}
             </pre>
           </details>
         </div>
