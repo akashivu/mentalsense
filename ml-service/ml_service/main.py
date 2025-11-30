@@ -14,7 +14,9 @@ from ml_service.utils.keystroke_features import extract_features_from_raw
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
 from ml_service.nlp.roberta_emotion import analyze_text
-
+from pydantic import BaseModel
+from ml_service.nlp.score_text import compute_text_metrics, normalize
+from ml_service.utils.keystroke_features import extract_features_from_raw
 app = FastAPI(title="MentalSense ML Service")
 
 class TextRequest(BaseModel):
@@ -82,19 +84,12 @@ class TrendRequest(BaseModel):
 
 
 class AnomalyRequest(BaseModel):
-    """
-    Accepts either:
-      - single `value` (float) when your IsolationForest was trained on 1 feature, OR
-      - `features` (list of floats) when model expects multiple features.
-    """
+    
     value: Optional[float] = None
     features: Optional[List[float]] = None
 
     def first_feature_vector(self) -> np.ndarray:
-        """
-        Returns a 2D numpy array shaped (1, n_features) for sklearn.
-        Prefers `features` if provided; otherwise uses single `value`.
-        """
+       
         if self.features is not None:
             return np.array([list(map(float, self.features))], dtype=float)
         if self.value is not None:
@@ -114,7 +109,7 @@ def predict_keystroke(payload: EventItem):
         normalized_ev = []
 
         def safe_key(k):
-            """Always return a string key — avoid None.lower error"""
+         
             try:
                 if k is None:
                     return "key"
@@ -311,3 +306,35 @@ def predict_anomaly(payload: AnomalyRequest):
         raise HTTPException(status_code=500, detail=f"isoforest predict failed: {e}")
 
     return {"anomaly": int(pred)}
+
+class CombinedRequest(BaseModel):
+    event_times: list = None
+    keystroke_features: dict = None
+    raw_text: str = ""
+
+@app.post("/predict/combined")
+def predict_combined(payload: CombinedRequest):
+    text_metrics = compute_text_metrics(payload.raw_text or "")
+
+    
+    if payload.keystroke_features:
+        kf = payload.keystroke_features
+        keystroke_score = float(kf.get("stress_score", 0.0)) if "stress_score" in kf else 0.0
+    elif payload.event_times:
+        feats = extract_features_from_raw(payload.event_times, None, payload.raw_text or "")
+        ks = 0.0
+        ks += min(1.0, feats.get("backspace_rate", 0.0) / 20.0) * 0.6
+        ks += min(1.0, (feats.get("avg_interkey_ms", 0.0)) / 300.0) * 0.3
+        ks += min(1.0, (feats.get("std_hold_ms", 0.0)) / 200.0) * 0.1
+        keystroke_score = normalize(ks, 0.0, 1.0)
+    else:
+        keystroke_score = 0.0
+
+    combined = 0.65 * text_metrics["text_stress_score"] + 0.35 * keystroke_score
+    combined = normalize(combined, 0.0, 1.0)
+
+    return {
+        "text_metrics": text_metrics,
+        "keystroke_score": float(keystroke_score),
+        "combined_stress_score": float(combined)
+    }

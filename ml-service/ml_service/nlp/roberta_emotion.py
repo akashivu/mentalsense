@@ -14,10 +14,7 @@ pipe = None
 labels = None
 
 def get_pipeline():
-    """
-    Lazily load the HuggingFace pipeline for sentiment/emotion classification.
-    Returns a pipeline object that returns all scores (return_all_scores=True).
-    """
+   
     global pipe, labels
     if pipe is None:
         logger.info("Loading emotion model %s", MODEL_NAME)
@@ -46,10 +43,7 @@ _STRESS_MAP = {
 }
 
 def compute_stress_score(scores):
-    """
-    scores: list of dicts [{'label': '...', 'score': 0.xx}, ...]
-    returns float between 0 and 1
-    """
+    
     total = 0.0
     for item in scores:
         label = item.get("label", "").lower()
@@ -60,14 +54,7 @@ def compute_stress_score(scores):
     return max(0.0, min(1.0, float(total)))
 
 def analyze_text(text):
-    """
-    Analyze a single text string and return:
-    {
-      "label": predicted_label,
-      "scores": [{"label": "...", "score": 0.xx}, ...],
-      "stress_score": 0.XX
-    }
-    """
+  
     if not isinstance(text, str):
         raise ValueError("text must be a string")
     p = get_pipeline()
