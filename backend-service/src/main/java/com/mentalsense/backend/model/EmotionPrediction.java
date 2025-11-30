@@ -26,6 +26,27 @@ public class EmotionPrediction {
 
     private Instant createdAt = Instant.now();
 
+    @Column(columnDefinition = "text")
+    private String keystrokeJson;
+
+    public String getKeystrokeJson() {
+        return keystrokeJson;
+    }
+
+    public void setKeystrokeJson(String keystrokeJson) {
+        this.keystrokeJson = keystrokeJson;
+    }
+
+    public Double getCombinedScore() {
+        return combinedScore;
+    }
+
+    public void setCombinedScore(Double combinedScore) {
+        this.combinedScore = combinedScore;
+    }
+
+    private Double combinedScore;
+
 
     public EmotionPrediction() {}
 

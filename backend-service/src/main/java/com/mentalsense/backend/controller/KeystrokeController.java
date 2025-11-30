@@ -48,7 +48,7 @@ public class KeystrokeController {
             ResponseEntity<Map> mlRes = restTemplate.postForEntity("http://localhost:8000/predict/keystroke", mlReq, Map.class);
             Map mlBody = mlRes.getBody();
             if (mlBody != null) {
-                // prefer stress_score, fallback to confidence/score
+
                 if (mlBody.get("stress_score") != null) {
                     mlStress = Double.valueOf(mlBody.get("stress_score").toString());
                 } else if (mlBody.get("confidence") != null) {
