@@ -2,37 +2,29 @@ import React, { useState, useRef } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
 
-
 export default function EmotionBox({ onNewPrediction }) {
   const [text, setText] = useState("");
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
- 
   const eventTimesRef = useRef([]); 
   const keyDownMapRef = useRef({}); 
 
   const nowMs = () => new Date().getTime();
 
-  
   const handleKeyDown = (e) => {
     const k = e.key;
-    
     if (k.length === 1 || k === "Backspace" || k === "Enter" || k === "Tab") {
       const t = nowMs();
-      
       const id = `${k}_${t}`;
       keyDownMapRef.current[id] = t;
-     
       eventTimesRef.current.push([k, t, null, id]);
     }
   };
 
- 
   const handleKeyUp = (e) => {
     const k = e.key;
     const t = nowMs();
-   
     for (let i = eventTimesRef.current.length - 1; i >= 0; i--) {
       const row = eventTimesRef.current[i];
       if (row[0] === k && row[2] === null) {
@@ -42,7 +34,6 @@ export default function EmotionBox({ onNewPrediction }) {
     }
   };
 
- 
   const resetKeystrokeCapture = () => {
     eventTimesRef.current = [];
     keyDownMapRef.current = {};
@@ -58,33 +49,38 @@ export default function EmotionBox({ onNewPrediction }) {
     setResult(null);
 
     try {
-     
       const rawEvents = eventTimesRef.current
         .filter((r) => r[1] != null && r[2] != null)
         .map((r) => [r[0], r[1], r[2]]);
 
-      const payload = {
-        raw_text: text,
-      };
+      // choose endpoint depending on whether we have keystroke events
+      const hasKeystrokes = rawEvents.length > 0;
+      const endpoint = hasKeystrokes ? "/predict/combined" : "/predict/emotion_text";
+      const url = `http://localhost:8080${endpoint}`;
 
-      if (rawEvents.length > 0) {
-        payload.event_times = rawEvents;
-      }
+      const payload = { raw_text: text };
+      if (hasKeystrokes) payload.event_times = rawEvents;
 
       const res = await axios.post(
-        "http://localhost:8080/predict/combined",
+        url,
         payload,
         { headers: { "Content-Type": "application/json", ...authHeader() }, timeout: 15000 }
       );
 
-      const data = res.data;
+      const data = res.data || {};
 
-      
-      
-      const combinedScore = data?.combined_score ?? null;
-      const textMetrics = data?.text_metrics ?? null;
-      const keystrokeScore = data?.keystroke_score ?? null;
-      const predictionId = data?.prediction_id ?? data?.id ?? null;
+      // normalize response shape for frontend usage:
+      // prefer combined_score, then adjusted_score (text-only), then fallback to 0
+      const combinedScore = typeof data.combined_score === "number"
+        ? data.combined_score
+        : typeof data.adjusted_score === "number"
+        ? data.adjusted_score
+        : (typeof data.raw_score === "number" ? data.raw_score : null);
+
+      const textMetrics = data.text_metrics ?? data.textMetrics ?? null;
+      // keystroke_score may not exist for text-only; fallback to provided keystroke_score or null
+      const keystrokeScore = data.keystroke_score ?? null;
+      const predictionId = data.prediction_id ?? data.predictionId ?? data.id ?? null;
 
       const timestamp = new Date().toISOString();
 
@@ -95,12 +91,13 @@ export default function EmotionBox({ onNewPrediction }) {
         prediction_id: predictionId,
         raw_text: text,
         ts: timestamp,
+        source: endpoint === "/predict/combined" ? "combined" : "text_only",
       };
 
       setResult(out);
       if (onNewPrediction) onNewPrediction(out);
 
-     
+      // clear input and captured keystrokes after success
       setText("");
       resetKeystrokeCapture();
     } catch (err) {
@@ -164,7 +161,7 @@ export default function EmotionBox({ onNewPrediction }) {
       </form>
 
       {result && (
-        <div className="mt-4 bg-slate-50 p-4 rounded-md border">
+        <div className="mt-4 bg-gray-50 p-4 rounded-md border">
           <div className="flex items-center justify-between">
             <div className="text-sm text-slate-700">
               <span className="font-semibold">Predicted:</span>{" "}

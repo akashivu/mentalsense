@@ -1,8 +1,8 @@
 import React, { useEffect, useState } from "react";
 import TrendGraph from "./TrendGraph";
-import { fetchTrendForUser, checkAnomaly } from "../api/ml"; // adjust path if different
+import { fetchTrendForUser, checkAnomaly } from "../api/ml"; 
 
-export default function TrendContainer({ userId = 1 }) { // default to 1 for testing
+export default function TrendContainer({ userId = 1 }) {
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
   const [anomaly, setAnomaly] = useState(null);
@@ -18,8 +18,7 @@ export default function TrendContainer({ userId = 1 }) { // default to 1 for tes
       const res = await fetch(`http://localhost:8080/user/${userId}/trend`);
       if (!res.ok) {
         const err = await res.json();
-        // Backend returns structured JSON when not enough data:
-        // { error: "Not enough data for trend prediction", required: 10, found: n }
+       
         if (err.error && err.error.includes("Not enough data")) {
           setPast([]);
           setFuture([]);
@@ -49,7 +48,7 @@ export default function TrendContainer({ userId = 1 }) { // default to 1 for tes
   async function checkLatest(val) {
     try {
       const r = await checkAnomaly(userId, val);
-      // assume API returns { anomaly: 1 } or { anomaly: -1 }
+      
       setAnomaly(r?.anomaly ?? null);
       if (r?.anomaly === -1) {
         alert("⚠ Anomaly detected!");
@@ -60,7 +59,7 @@ export default function TrendContainer({ userId = 1 }) { // default to 1 for tes
   }
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 shadow-lg rounded-xl p-6 mt-6">
+    <div className="w-full bg-gray-500 dark:bg-gray-900 shadow-lg rounded-xl p-6 mt-6">
       <h3 className="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">
         Stress Trend
       </h3>

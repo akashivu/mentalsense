@@ -58,7 +58,7 @@ export default function TrendGraph({ past = [], future = [] }) {
   };
 
   return (
-    <div className="w-full bg-white dark:bg-gray-900 shadow-md rounded-xl p-5">
+    <div className="w-full bg-gray-500 dark:bg-gray-900 shadow-md rounded-xl p-5">
       <h2 className="text-lg font-semibold mb-4 text-gray-800 dark:text-gray-200">
         Stress Trend Analysis
       </h2>
