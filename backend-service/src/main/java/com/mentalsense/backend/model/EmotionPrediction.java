@@ -71,4 +71,7 @@ public class EmotionPrediction {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+
+    public void setRawCombinedScore(Double rawTextScore) {
+    }
 }
