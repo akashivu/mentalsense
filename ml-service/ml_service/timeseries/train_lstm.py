@@ -26,6 +26,6 @@ def train(values, seq_len=10, epochs=25, batch_size=8):
     print("Saved LSTM model at", MODEL_DIR / "lstm_stress.h5")
 
 if __name__ == "__main__":
-    # quick local debug: synthetic trend
+  
     dummy = [0.1 + (i*0.01) for i in range(60)]
     train(dummy)

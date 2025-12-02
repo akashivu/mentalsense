@@ -9,6 +9,7 @@ import numpy as np
 from pydantic import BaseModel
 from fastapi import FastAPI, HTTPException, APIRouter, Request
 from fastapi.responses import JSONResponse
+from sklearn.ensemble import IsolationForest
 
 from ml_service.utils.keystroke_features import extract_features_from_raw
 from fastapi import FastAPI, HTTPException
@@ -18,7 +19,10 @@ from pydantic import BaseModel
 from ml_service.nlp.score_text import compute_text_metrics, normalize
 from ml_service.utils.keystroke_features import extract_features_from_raw
 app = FastAPI(title="MentalSense ML Service")
-
+from ml_service.timeseries.train_lstm_user import predict_future_from_model
+from ml_service.timeseries.train_anomaly_user import predict_user_anomaly
+from pydantic import BaseModel
+from typing import Any, Dict, List, Optional
 class TextRequest(BaseModel):
     text: str
 
@@ -338,3 +342,186 @@ def predict_combined(payload: CombinedRequest):
         "keystroke_score": float(keystroke_score),
         "combined_stress_score": float(combined)
     }
+
+
+from fastapi import BackgroundTasks
+from ml_service.timeseries.train_lstm_user import (
+    train_user_lstm,
+    predict_future_from_model,
+    MODEL_DIR as LSTM_MODEL_DIR
+)
+from pathlib import Path
+
+MODELS_DIR = LSTM_MODEL_DIR  
+
+def train_user_isoforest(user_id: int, values, contamination=0.07):
+    """
+    Train & save IsolationForest model for one user.
+    Saves: models/user_{id}_isoforest.pkl
+    """
+    try:
+        arr = np.array(values).reshape(-1, 1)
+        iso = IsolationForest(contamination=contamination, random_state=42)
+        iso.fit(arr)
+
+        path = MODELS_DIR / f"user_{user_id}_isoforest.pkl"
+        joblib.dump(iso, path)
+        return {"success": True, "model_path": str(path)}
+
+    except Exception as e:
+        logger.exception("ISO train failed for user=%s : %s", user_id, e)
+        return {"success": False, "message": str(e)}
+
+
+
+@app.post("/user/{user_id}/train-models")
+def train_models_for_user(user_id: int, payload: dict):
+    
+    values = payload.get("values")
+    if not values:
+        raise HTTPException(status_code=400, detail="values required")
+
+    seq_len = int(payload.get("seq_len", 10))
+    epochs = int(payload.get("epochs", 25))
+    train_iso_flag = bool(payload.get("train_iso", True))
+    scale = bool(payload.get("scale", True))
+
+  
+    lstm_res = train_user_lstm(
+        user_id,
+        values,
+        seq_len=seq_len,
+        epochs=epochs,
+        scale=scale,
+        verbose=0
+    )
+
+    
+    iso_res = None
+    if train_iso_flag:
+        iso_res = train_user_isoforest(user_id, values)
+
+    return {
+        "ok": True,
+        "lstm": lstm_res,
+        "iso": iso_res
+    }
+
+
+
+class TrendUserRequest(BaseModel):
+    past_values: list
+
+@app.post("/user/{user_id}/trend")
+def trend_user(user_id: int, payload: TrendUserRequest):
+    res = predict_future_from_model(
+        user_id=user_id,
+        past_values=payload.past_values,
+        n_steps=5,
+        seq_len=10
+    )
+
+    if res["success"]:
+        return {"ok": True, "past": res["past"], "future": res["future"]}
+
+   
+    vals = []
+    raw = payload.past_values[-10:]
+    for v in raw:
+        try: vals.append(float(v))
+        except: continue
+    while len(vals) < 10:
+        vals.insert(0, 0.0)
+    last = vals[-1]
+    fallback_future = [last + 0.02*(i+1) for i in range(5)]
+
+    return {
+        "ok": True,
+        "past": vals,
+        "future": fallback_future,
+        "note": "fallback_no_lstm"
+    }
+
+
+
+
+class AnomalyUserRequest(BaseModel):
+    value: Optional[float] = None
+
+@app.post("/user/{user_id}/anomaly")
+def anomaly_user(user_id: int, payload: AnomalyUserRequest):
+    user_iso_path = MODELS_DIR / f"user_{user_id}_isoforest.pkl"
+
+    if not user_iso_path.exists():
+        raise HTTPException(status_code=404, detail="User IsolationForest model not trained")
+
+    iso_model = joblib.load(user_iso_path)
+
+    X = np.array([[payload.value]], dtype=float)
+    pred = iso_model.predict(X)[0] 
+
+    return {"ok": True, "anomaly": int(pred)}
+class TrendUserPayload(BaseModel):
+    user_id: int
+    past_values: List[float]
+    seq_len: Optional[int] = 10
+    n_steps: Optional[int] = 5
+
+class AnomalyUserPayload(BaseModel):
+    user_id: int
+    
+    value: Optional[float] = None
+    
+    features: Optional[List[float]] = None
+    multi_features: Optional[List[List[float]]] = None
+    use_scaler_if_exists: Optional[bool] = True
+
+
+@app.post("/trend/user")
+def ml_trend_user(payload: TrendUserPayload):
+   
+    try:
+        uid = int(payload.user_id)
+        past = payload.past_values or []
+        seq_len = int(payload.seq_len or 10)
+        n_steps = int(payload.n_steps or 5)
+
+        res = predict_future_from_model(user_id=uid, past_values=past, n_steps=n_steps, seq_len=seq_len)
+        if not res.get("success"):
+           
+            return {"ok": False, "message": res.get("message"), "past": res.get("past", []), "future": res.get("future", [])}
+
+        return {"ok": True, "past": res.get("past", []), "future": res.get("future", [])}
+    except Exception as e:
+        logger.exception("ml_trend_user failed")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+
+@app.post("/anomaly/user")
+def ml_anomaly_user(payload: AnomalyUserPayload):
+   
+    try:
+        uid = int(payload.user_id)
+        use_scaler = bool(payload.use_scaler_if_exists)
+
+        
+        if payload.multi_features is not None:
+            X = payload.multi_features
+        elif payload.features is not None:
+           
+            X = [payload.features]
+        elif payload.value is not None:
+            X = [[float(payload.value)]]
+        else:
+            raise HTTPException(status_code=400, detail="Provide 'value' or 'features' or 'multi_features'")
+
+        r = predict_user_anomaly(uid, X, use_scaler_if_exists=use_scaler)
+        if not r.get("success"):
+            return {"ok": False, "message": r.get("message"), "prediction": r.get("prediction", [])}
+        return {"ok": True, "prediction": r.get("prediction", [])}
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("ml_anomaly_user failed")
+        raise HTTPException(status_code=500, detail=str(e))
