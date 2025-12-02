@@ -1,4 +1,4 @@
-// src/components/WeeklyTrend.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Bar } from "react-chartjs-2";
@@ -14,7 +14,7 @@ export default function WeeklyTrend({ userId = null, days = 14, daily = null }) 
 
   useEffect(() => {
     if (Array.isArray(daily)) {
-      // accept daily array from parent: [{ date: "2025-11-29", avg: 0.45 }, ...]
+     
       const normalized = daily.map(d => ({ date: d.date ?? d.day ?? d.ts, avg: Math.max(0, Math.min(1, d.avg ?? d.average ?? d.daily_average ?? 0)) }));
       setDataPoints(normalized);
       return;

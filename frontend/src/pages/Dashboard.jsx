@@ -1,11 +1,20 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import EmotionBox from "../components/EmotionBox";
 import EmotionGraph from "../components/EmotionGraph";
 import WeeklyTrend from "../components/WeeklyTrend";
+import TrendGraph from "../components/TrendGraph";
+import AnomalyAlert from "../components/AnomalyAlert";
+import axios from "axios";
 
 export default function Dashboard() {
-  const [predictions, setPredictions] = useState([]);
+  const userId = localStorage.getItem("userId");
 
+  const [predictions, setPredictions] = useState([]);
+  const [past, setPast] = useState([]);
+  const [future, setFuture] = useState([]);
+  const [anomaly, setAnomaly] = useState(false);
+
+ 
   const onNewPrediction = (res) => {
     const payload = res && res.result ? res.result : res;
 
@@ -43,21 +52,86 @@ export default function Dashboard() {
       const next = [p, ...prev];
       return next.slice(0, 12);
     });
+
+    
+    fetchTrend();
   };
+
+
+  const fetchTrend = async () => {
+    try {
+      const histRes = await axios.get(
+        `http://localhost:8080/history/${userId}`
+      );
+
+      const values = histRes.data.map((item) => item.stressScore);
+
+      if (!values || values.length === 0) return;
+
+      const res = await axios.post(
+        `http://localhost:8080/user/${userId}/trend`,
+        { past_values: values }
+      );
+
+      setPast(res.data.past || []);
+      setFuture(res.data.future || []);
+
+     
+      const lastVal = values[values.length - 1];
+      checkAnomaly(lastVal);
+
+    } catch (err) {
+      console.error("Trend fetch error:", err);
+    }
+  };
+
+  
+  const checkAnomaly = async (lastValue) => {
+    try {
+      const res = await axios.post(
+        `http://localhost:8080/user/${userId}/anomaly`,
+        { value: Number(lastValue) }
+      );
+
+      if (res.data.anomaly === -1) {
+        setAnomaly(true);
+      } else {
+        setAnomaly(false);
+      }
+    } catch (err) {
+      console.error("Anomaly error:", err);
+    }
+  };
+
+  
+  useEffect(() => {
+    fetchTrend();
+  }, []);
 
   return (
     <div className="min-h-screen bg-slate-50 p-6">
       <div className="max-w-4xl mx-auto space-y-6">
+
         <header className="flex items-center justify-between">
           <h1 className="text-2xl font-bold text-slate-800">Dashboard</h1>
-          <div className="text-sm text-slate-500">check your emotion</div>
+          <div className="text-sm text-slate-500">Check your emotional health</div>
         </header>
 
+       
+        <AnomalyAlert visible={anomaly} />
+
+        
         <EmotionBox onNewPrediction={onNewPrediction} />
 
-        {/* use client-side predictions (live) */}
+        
+        <TrendGraph past={past} future={future} />
+
+        
         <WeeklyTrend days={14} />
+
+        
         <EmotionGraph data={predictions} />
+
       </div>
     </div>
   );

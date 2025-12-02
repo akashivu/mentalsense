@@ -1,4 +1,4 @@
-// src/components/EmotionGraph.jsx
+
 import React, { useEffect, useMemo, useState } from "react";
 import axios from "axios";
 import { Line } from "react-chartjs-2";
@@ -11,21 +11,21 @@ import {
   Tooltip,
   Legend,
   CategoryScale,
+  Filler,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
-import { authHeader } from "../services/AuthService"; // <- ensure casing matches file
+import { authHeader } from "../services/AuthService";
 
-ChartJS.register(TimeScale, LinearScale, PointElement, LineElement, Tooltip, Legend, CategoryScale);
+ChartJS.register(TimeScale, LinearScale, PointElement, LineElement, Tooltip, Legend, CategoryScale,Filler);
 
 export default function EmotionGraph({ userId = null, limit = 50, data = null }) {
-  // If `data` prop is provided, component will use it (your onNewPrediction flow).
-  // Otherwise, if userId is provided, component will fetch from backend automatically.
+  
   const [past, setPast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // If explicit data provided, just use it (normalize shape)
+   
     if (Array.isArray(data)) {
       const items = data.map((p) => ({
         ts: p.ts ?? p.createdAt ?? p.created_at ?? null,
@@ -35,7 +35,7 @@ export default function EmotionGraph({ userId = null, limit = 50, data = null })
       return;
     }
 
-    // Else try fetching by userId
+   
     if (!userId) {
       setPast([]);
       return;
@@ -68,7 +68,7 @@ export default function EmotionGraph({ userId = null, limit = 50, data = null })
     return () => { mounted = false; };
   }, [userId, limit, data]);
 
-  // Chart points: { x: Date, y: number }
+ 
   const chartPoints = useMemo(() =>
     past.map(p => ({
       x: p.ts ? new Date(p.ts) : null,

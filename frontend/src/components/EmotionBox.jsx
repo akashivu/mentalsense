@@ -53,7 +53,7 @@ export default function EmotionBox({ onNewPrediction }) {
         .filter((r) => r[1] != null && r[2] != null)
         .map((r) => [r[0], r[1], r[2]]);
 
-      // choose endpoint depending on whether we have keystroke events
+      
       const hasKeystrokes = rawEvents.length > 0;
       const endpoint = hasKeystrokes ? "/predict/combined" : "/predict/emotion_text";
       const url = `http://localhost:8080${endpoint}`;
@@ -69,8 +69,7 @@ export default function EmotionBox({ onNewPrediction }) {
 
       const data = res.data || {};
 
-      // normalize response shape for frontend usage:
-      // prefer combined_score, then adjusted_score (text-only), then fallback to 0
+     
       const combinedScore = typeof data.combined_score === "number"
         ? data.combined_score
         : typeof data.adjusted_score === "number"
@@ -78,7 +77,7 @@ export default function EmotionBox({ onNewPrediction }) {
         : (typeof data.raw_score === "number" ? data.raw_score : null);
 
       const textMetrics = data.text_metrics ?? data.textMetrics ?? null;
-      // keystroke_score may not exist for text-only; fallback to provided keystroke_score or null
+      
       const keystrokeScore = data.keystroke_score ?? null;
       const predictionId = data.prediction_id ?? data.predictionId ?? data.id ?? null;
 
@@ -97,7 +96,7 @@ export default function EmotionBox({ onNewPrediction }) {
       setResult(out);
       if (onNewPrediction) onNewPrediction(out);
 
-      // clear input and captured keystrokes after success
+      
       setText("");
       resetKeystrokeCapture();
     } catch (err) {
