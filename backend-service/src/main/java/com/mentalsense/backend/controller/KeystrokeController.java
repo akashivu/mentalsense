@@ -38,7 +38,7 @@ public class KeystrokeController {
         String rawText = rawTextObj == null ? "" : rawTextObj.toString();
 
         Map<String, Object> mlReq = Map.of(
-                "event_times", body.get("event_times"),   // may be null or list
+                "event_times", body.get("event_times"),
                 "raw_text", rawText
         );
 

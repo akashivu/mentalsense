@@ -13,6 +13,6 @@ import java.util.Optional;
 public interface DailyStressRepo extends JpaRepository<DailyStress, Long> {
 
     Optional<DailyStress> findByUserIdAndDay(Long userId, LocalDate day);
-
+    List<DailyStress> findByUserIdAndDayAfterOrderByDayAsc(Long userId, LocalDate day);
     List<DailyStress> findByUserIdOrderByDayDesc(Long userId);
 }

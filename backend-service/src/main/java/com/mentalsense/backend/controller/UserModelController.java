@@ -33,7 +33,7 @@ public class UserModelController {
         try {
             if (body == null) body = new HashMap<>();
 
-            // If frontend does not send values, backend fetches from DB
+
             if (!body.containsKey("values")) {
                 List<StressHistory> list = stressRepo.findByUserIdOrderByCreatedAtAsc(userId);
                 List<Double> arr = new ArrayList<>();
@@ -76,7 +76,7 @@ public class UserModelController {
                 return ResponseEntity.badRequest().body(Map.of("error", "past_values required"));
             }
 
-            // ML service expects: { "past_values": [...] }
+
             Map<String, Object> mlReq = new HashMap<>();
             mlReq.put("past_values", body.get("past_values"));
 
@@ -105,8 +105,8 @@ public class UserModelController {
             @RequestBody Map<String, Object> body
     ) {
         try {
-            Map<String, Object> mlReq = new HashMap<>();
-            // ML service actually only needs "value", but extra fields are ignored
+          Map<String, Object> mlReq = new HashMap<>();
+
             if (body.containsKey("value")) {
                 mlReq.put("value", body.get("value"));
             }
@@ -118,21 +118,28 @@ public class UserModelController {
             }
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);
-            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
+            headers.setContentType(MediaType.APPLICATION_JSON);HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
-            String url = ML_BASE + "/user/" + userId + "/anomaly";
+            String url = ML_BASE + "/predict/anomaly";
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
             return ResponseEntity.status(mlRes.getStatusCode()).body(mlRes.getBody());
 
         } catch (RestClientException ex) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                    .body(Map.of("error", "ML service unavailable", "detail", ex.getMessage()));
+    .body(Map.of("error", "ML service unavailable", "detail", ex.getMessage()));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", ex.getMessage()));
         }
+    }
+    @GetMapping("/{userId}/anomalies")
+    public ResponseEntity<?> getAnomalies(
+            @PathVariable Long userId,
+            @RequestParam(defaultValue = "30") int limit
+    ) {
+
+        return ResponseEntity.ok(Collections.emptyList());
     }
 
 }
