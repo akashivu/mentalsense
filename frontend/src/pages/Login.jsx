@@ -9,9 +9,29 @@ export default function Login() {
     e.preventDefault();
     try {
       const res = await login(email, password);
+
+      
+      console.log("Login response:", res.data);
+
       if (res.data.token) {
+       
         setToken(res.data.token);
+
+        
+        const data = res.data;
+        const user =
+          data.user || data.userDetails || data; 
+
+        const userId = user.userId || user.id;
+
+        if (userId) {
+          localStorage.setItem("userId", userId);
+        } else {
+          console.warn("No userId found in login response");
+        }
+
         alert("Logged in successfully");
+        
       } else {
         alert("Invalid login");
       }
@@ -19,7 +39,6 @@ export default function Login() {
       alert("Login failed: " + (err?.response?.data?.error || err.message));
     }
   };
-
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-100 px-4">
       <form

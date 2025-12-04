@@ -61,7 +61,7 @@ export default function useKeystrokeCapture() {
 
   const sendToServer = useCallback(async (features, userId) => {
     try {
-      // 1️⃣ Save keystroke sample
+     
       await axios.post(
         "http://localhost:8080/keystroke/log",
         {
@@ -76,7 +76,7 @@ export default function useKeystrokeCapture() {
         }
       );
 
-      // 2️⃣ Call anomaly detection (3-feature vector)
+     
       const anomalyPayload = {
         features: [
           features.typingSpeed,
