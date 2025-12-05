@@ -55,5 +55,17 @@ public interface StressHistoryRepo extends JpaRepository<StressHistory, Long> {
             nativeQuery = true)
     List<Object[]> findDailyEngagement(@Param("uid") Long uid,
                                        @Param("from") Instant from);
+    @Query("""
+    SELECT AVG(sh.stressScore)
+    FROM StressHistory sh
+    WHERE sh.userId = :uid
+      AND sh.createdAt >= :from
+      AND sh.createdAt < :to
+""")
+    Double avgStressBetween(
+            @Param("uid") Long uid,
+            @Param("from") Instant from,
+            @Param("to") Instant to
+    );
 
 }

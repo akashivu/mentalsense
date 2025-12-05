@@ -124,6 +124,38 @@ public class HistoryController {
 
         return ResponseEntity.ok(list);
     }
+    @GetMapping("/user/{id}/weekly-stats")
+    public ResponseEntity<?> getWeeklyStats(
+            @PathVariable Long id,
+            HttpServletRequest request) {
+
+        Object uAttr = request.getAttribute("userId");
+        if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "not allowed"));
+        }
+
+        Instant now = Instant.now();
+        Instant lastWeekStart = now.minusSeconds(7 * 24L * 3600L);
+        Instant prevWeekStart = now.minusSeconds(14 * 24L * 3600L);
+
+        Double thisWeekAvgObj = stressHistoryRepo.avgStressBetween(id, lastWeekStart, now);
+        Double lastWeekAvgObj = stressHistoryRepo.avgStressBetween(id, prevWeekStart, lastWeekStart);
+
+        double thisWeekAvg = thisWeekAvgObj != null ? thisWeekAvgObj : 0.0;
+        double lastWeekAvg = lastWeekAvgObj != null ? lastWeekAvgObj : 0.0;
+
+        String trend;
+        if (thisWeekAvg > lastWeekAvg) trend = "increasing";
+        else if (thisWeekAvg < lastWeekAvg) trend = "decreasing";
+        else trend = "stable";
+
+        return ResponseEntity.ok(Map.of(
+                "thisWeek", thisWeekAvg,
+                "lastWeek", lastWeekAvg,
+                "trend", trend
+        ));
+    }
 
 }
 
