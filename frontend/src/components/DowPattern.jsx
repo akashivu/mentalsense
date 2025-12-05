@@ -1,15 +1,19 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
-import { authHeader } from "../services/AuthService"; 
+import { authHeader } from "../services/AuthService";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 export default function DowPattern({ userId, days = 28 }) {
-  const [dow, setDow] = useState(Array(7).fill(0));
-  const [loading, setLoading] = useState(false);
+  const [dow, setDow] = useState(null); // null = no data yet
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setDow(null);
+      setLoading(false);
+      return;
+    }
 
     let mounted = true;
     setLoading(true);
@@ -21,7 +25,6 @@ export default function DowPattern({ userId, days = 28 }) {
           { headers: authHeader() }
         );
 
-       
         const arr = res.data?.dow ?? [];
         if (!mounted) return;
 
@@ -35,6 +38,9 @@ export default function DowPattern({ userId, days = 28 }) {
         setDow(normalized);
       } catch (e) {
         console.error("Failed to load DOW stress", e);
+        if (mounted) {
+          setDow([]);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -44,6 +50,25 @@ export default function DowPattern({ userId, days = 28 }) {
       mounted = false;
     };
   }, [userId, days]);
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
+        Analyzing which days are most stressful for you…
+      </div>
+    );
+  }
+
+  // Empty / no meaningful data
+  if (!dow || dow.length === 0 || dow.every((v) => v === 0)) {
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
+        Not enough data yet to show a day-of-week stress pattern. Keep using
+        the app and we’ll surface insights here.
+      </div>
+    );
+  }
 
   const max = Math.max(...dow, 0.0001);
 
@@ -83,15 +108,6 @@ export default function DowPattern({ userId, days = 28 }) {
           );
         })}
       </div>
-
-      {loading && (
-        <div className="mt-2 text-xs text-slate-500">Loading…</div>
-      )}
-      {!loading && dow.every(v => v === 0) && (
-        <div className="mt-2 text-xs text-slate-500">
-          Not enough data yet to show a pattern.
-        </div>
-      )}
     </div>
   );
 }

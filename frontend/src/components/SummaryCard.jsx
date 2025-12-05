@@ -1,7 +1,7 @@
 import React from "react";
 
 export default function SummaryCard({ score, trend }) {
-  // score: 0–1 (stress level)
+  
   const safeScore = typeof score === "number" ? Math.max(0, Math.min(1, score)) : 0;
 
   const percent = (safeScore * 100).toFixed(0);

@@ -1,4 +1,4 @@
-const BASE = "http://localhost:8080"; // backend port
+const BASE = "http://localhost:8080"; 
 
 export async function fetchTrendForUser(userId) {
   const res = await fetch(`${BASE}/user/${userId}/trend`, {
@@ -6,7 +6,7 @@ export async function fetchTrendForUser(userId) {
     headers: { "Content-Type": "application/json" },
   });
   if (!res.ok) throw new Error(`trend fetch ${res.status}`);
-  return res.json(); // expects { "future": [...], ... } or whatever ML returns
+  return res.json(); 
 }
 
 export async function checkAnomaly(userId, value) {
@@ -16,5 +16,5 @@ export async function checkAnomaly(userId, value) {
     body: JSON.stringify({ value }),
   });
   if (!res.ok) throw new Error(`anomaly ${res.status}`);
-  return res.json(); // expects {"anomaly": 1} or {"anomaly": -1}
+  return res.json(); 
 }

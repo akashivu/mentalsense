@@ -25,11 +25,15 @@ ChartJS.register(
 );
 
 export default function EngagementTimeline({ userId, days = 30 }) {
-  const [points, setPoints] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [points, setPoints] = useState(null); // null = not loaded yet
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!userId) return;
+    if (!userId) {
+      setPoints([]);
+      setLoading(false);
+      return;
+    }
 
     let mounted = true;
     setLoading(true);
@@ -44,7 +48,7 @@ export default function EngagementTimeline({ userId, days = 30 }) {
         if (!mounted) return;
 
         const arr = Array.isArray(res.data) ? res.data : [];
-        // normalize to { date: Date, count: number }
+
         const normalized = arr.map((d) => ({
           date: d.day ? new Date(d.day) : new Date(),
           count: typeof d.count === "number" ? d.count : 0,
@@ -53,6 +57,9 @@ export default function EngagementTimeline({ userId, days = 30 }) {
         setPoints(normalized);
       } catch (e) {
         console.error("Failed to load engagement timeline", e);
+        if (mounted) {
+          setPoints([]);
+        }
       } finally {
         if (mounted) setLoading(false);
       }
@@ -63,6 +70,26 @@ export default function EngagementTimeline({ userId, days = 30 }) {
     };
   }, [userId, days]);
 
+  // 🔹 Loading state
+  if (loading) {
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
+        Loading your engagement timeline…
+      </div>
+    );
+  }
+
+  // 🔹 Empty / no data state
+  if (!points || points.length === 0) {
+    return (
+      <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
+        No engagement data yet — your interactions over time will appear here
+        once you start using the app more regularly.
+      </div>
+    );
+  }
+
+  // ✅ We have data now
   const labels = points.map((p) => p.date);
   const values = points.map((p) => p.count);
 
@@ -119,13 +146,7 @@ export default function EngagementTimeline({ userId, days = 30 }) {
       </div>
 
       <div className="mt-4" style={{ height: 260 }}>
-        {points.length > 0 ? (
-          <Line data={data} options={options} />
-        ) : (
-          <div className="h-full flex items-center justify-center text-xs text-slate-500">
-            {loading ? "Loading…" : "No engagement data yet."}
-          </div>
-        )}
+        <Line data={data} options={options} />
       </div>
     </div>
   );
