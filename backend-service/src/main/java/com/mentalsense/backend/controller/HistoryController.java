@@ -20,31 +20,31 @@ public class HistoryController {
         this.stressHistoryRepo = stressHistoryRepo;
     }
 
+
     @GetMapping("/history/{id}")
     public ResponseEntity<?> getHistory(
             @PathVariable Long id,
             HttpServletRequest request) {
-
-
 
         Object uAttr = request.getAttribute("userId");
         if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "not allowed"));
         }
-
 
         List<StressHistory> list =
                 stressHistoryRepo.findByUserIdOrderByCreatedAtAsc(id);
 
         return ResponseEntity.ok(list);
     }
-    @GetMapping("/user/{id}/hourly-stress")
-    public ResponseEntity<?> getHourlyStress(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "7") int days,
-            HttpServletRequest request) {
 
+
+    @GetMapping({"/user/{id}/daily-stress", "/user/{id}/daily_stress"})
+    public ResponseEntity<?> getDailyStress(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "14") int days,
+            @RequestParam(defaultValue = "combined") String mode,
+            HttpServletRequest request) {
 
         Object uAttr = request.getAttribute("userId");
         if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
@@ -52,10 +52,52 @@ public class HistoryController {
                     .body(Map.of("error", "not allowed"));
         }
 
+        Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
+
+
+        var rows = switch (mode.toLowerCase()) {
+            case "keystroke" -> stressHistoryRepo.findDailyAvgKeystroke(id, from);
+            case "emotion"   -> stressHistoryRepo.findDailyAvgText(id, from);
+            default          -> stressHistoryRepo.findDailyAvgCombined(id, from);
+        };
+
+
+        var list = rows.stream().map(r -> {
+            String day = r[0].toString();
+            double avg = ((Number) r[1]).doubleValue();
+            return Map.<String, Object>of(
+                    "day", day,
+                    "avgStress", avg,
+                    "avg", avg
+            );
+        }).toList();
+
+        return ResponseEntity.ok(list);
+    }
+
+
+    // Hourly stress
+
+    @GetMapping("/user/{id}/hourly-stress")
+    public ResponseEntity<?> getHourlyStress(
+            @PathVariable Long id,
+            @RequestParam(defaultValue = "7") int days,
+            @RequestParam(defaultValue = "combined") String mode,
+            HttpServletRequest request) {
+
+        Object uAttr = request.getAttribute("userId");
+        if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "not allowed"));
+        }
 
         Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
 
-        var rows = stressHistoryRepo.findHourlyAvgStress(id, from);
+        var rows = switch (mode.toLowerCase()) {
+            case "keystroke" -> stressHistoryRepo.findHourlyAvgKeystroke(id, from);
+            case "emotion"   -> stressHistoryRepo.findHourlyAvgText(id, from);
+            default          -> stressHistoryRepo.findHourlyAvgCombined(id, from);
+        };
 
         double[] byHour = new double[24];
 
@@ -69,10 +111,15 @@ public class HistoryController {
 
         return ResponseEntity.ok(Map.of("hours", byHour));
     }
+
+
+    // Day-of-week stress
+
     @GetMapping("/user/{id}/dow-stress")
     public ResponseEntity<?> getDowStress(
             @PathVariable Long id,
             @RequestParam(defaultValue = "28") int days,
+            @RequestParam(defaultValue = "combined") String mode,
             HttpServletRequest request) {
 
         Object uAttr = request.getAttribute("userId");
@@ -82,16 +129,19 @@ public class HistoryController {
         }
 
         Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
-        var rows = stressHistoryRepo.findDowAvgStress(id, from);
+
+        var rows = switch (mode.toLowerCase()) {
+            case "keystroke" -> stressHistoryRepo.findDowAvgKeystroke(id, from);
+            case "emotion"   -> stressHistoryRepo.findDowAvgText(id, from);
+            default          -> stressHistoryRepo.findDowAvgCombined(id, from);
+        };
 
         double[] byDow = new double[7];
 
         for (Object[] r : rows) {
             int dow = ((Number) r[0]).intValue();
             Number avgNum = (Number) r[1];
-            if (avgNum == null) {
-                continue;
-            }
+            if (avgNum == null) continue;
             double avg = avgNum.doubleValue();
 
             if (dow >= 0 && dow < 7) {
@@ -99,9 +149,12 @@ public class HistoryController {
             }
         }
 
-
         return ResponseEntity.ok(Map.of("dow", byDow));
     }
+
+
+    // Engagement
+
     @GetMapping("/user/{id}/engagement")
     public ResponseEntity<?> getEngagement(
             @PathVariable Long id,
@@ -124,9 +177,14 @@ public class HistoryController {
 
         return ResponseEntity.ok(list);
     }
+
+
+
+
     @GetMapping("/user/{id}/weekly-stats")
     public ResponseEntity<?> getWeeklyStats(
             @PathVariable Long id,
+            @RequestParam(defaultValue = "combined") String mode,
             HttpServletRequest request) {
 
         Object uAttr = request.getAttribute("userId");
@@ -139,11 +197,8 @@ public class HistoryController {
         Instant lastWeekStart = now.minusSeconds(7 * 24L * 3600L);
         Instant prevWeekStart = now.minusSeconds(14 * 24L * 3600L);
 
-        Double thisWeekAvgObj = stressHistoryRepo.avgStressBetween(id, lastWeekStart, now);
-        Double lastWeekAvgObj = stressHistoryRepo.avgStressBetween(id, prevWeekStart, lastWeekStart);
-
-        double thisWeekAvg = thisWeekAvgObj != null ? thisWeekAvgObj : 0.0;
-        double lastWeekAvg = lastWeekAvgObj != null ? lastWeekAvgObj : 0.0;
+        double thisWeekAvg = getAvg(id, lastWeekStart, now, mode);
+        double lastWeekAvg = getAvg(id, prevWeekStart, lastWeekStart, mode);
 
         String trend;
         if (thisWeekAvg > lastWeekAvg) trend = "increasing";
@@ -153,9 +208,17 @@ public class HistoryController {
         return ResponseEntity.ok(Map.of(
                 "thisWeek", thisWeekAvg,
                 "lastWeek", lastWeekAvg,
-                "trend", trend
+                "trend", trend,
+                "mode", mode
         ));
     }
 
+    private double getAvg(Long id, Instant from, Instant to, String mode) {
+        Double avgObj = switch (mode.toLowerCase()) {
+            case "keystroke" -> stressHistoryRepo.avgKeystrokeBetween(id, from, to);
+            case "emotion"   -> stressHistoryRepo.avgTextBetween(id, from, to);
+            default          -> stressHistoryRepo.avgCombinedBetween(id, from, to);
+        };
+        return avgObj != null ? avgObj : 0.0;
+    }
 }
-

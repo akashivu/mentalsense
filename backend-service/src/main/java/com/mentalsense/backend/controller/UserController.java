@@ -79,38 +79,7 @@ public class UserController {
         return ResponseEntity.ok(Map.of("baseline", baseline));
     }
 
-    @GetMapping("/{id}/daily-stress")
-    public ResponseEntity<?> getDailyStress(
-            @PathVariable Long id,
-            @RequestParam(defaultValue = "7") int days,
-            HttpServletRequest request) {
 
-
-        Object uAttr = request.getAttribute("userId");
-        if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
-            return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                    .body(Map.of("error", "not allowed"));
-        }
-
-
-        LocalDate from = LocalDate.now().minusDays(days);
-
-
-        List<DailyStress> list =
-                dailyStressRepo.findByUserIdAndDayAfterOrderByDayAsc(id, from);
-
-
-        List<Map<String, Object>> res = list.stream()
-                .map(ds -> {
-                    Map<String, Object> m = new HashMap<>();
-                    m.put("day", ds.getDay().toString());
-                    m.put("avgStress", ds.getAvgStress());
-                    return m;
-                })
-                .toList();
-
-        return ResponseEntity.ok(res);
-    }
     @GetMapping("/{id}/anomalies")
     public ResponseEntity<?> getAnomalies(
             @PathVariable Long id,

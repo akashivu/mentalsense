@@ -27,7 +27,7 @@ public class JwtFilter implements Filter {
                 request.setAttribute("userId", Long.valueOf(c.getSubject()));
                 request.setAttribute("email", c.get("email"));
             } catch (Exception e) {
-                // invalid token: do not set userId
+
             }
         }
         chain.doFilter(req, res);

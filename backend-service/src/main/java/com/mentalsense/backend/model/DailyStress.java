@@ -20,6 +20,7 @@ public class DailyStress {
     private Instant createdAt = Instant.now();
 
     public void setUserId(Long uid) {
+        this.userId = uid;
     }
 
     public Long getId() {
@@ -57,6 +58,4 @@ public class DailyStress {
     public void setCreatedAt(Instant createdAt) {
         this.createdAt = createdAt;
     }
-
 }
-
