@@ -25,7 +25,7 @@ ChartJS.register(
 );
 
 export default function EngagementTimeline({ userId, days = 30 }) {
-  const [points, setPoints] = useState(null); // null = not loaded yet
+  const [points, setPoints] = useState(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -70,7 +70,7 @@ export default function EngagementTimeline({ userId, days = 30 }) {
     };
   }, [userId, days]);
 
-  // 🔹 Loading state
+ 
   if (loading) {
     return (
       <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
@@ -79,7 +79,7 @@ export default function EngagementTimeline({ userId, days = 30 }) {
     );
   }
 
-  // 🔹 Empty / no data state
+  
   if (!points || points.length === 0) {
     return (
       <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
@@ -89,7 +89,7 @@ export default function EngagementTimeline({ userId, days = 30 }) {
     );
   }
 
-  // ✅ We have data now
+  
   const labels = points.map((p) => p.date);
   const values = points.map((p) => p.count);
 

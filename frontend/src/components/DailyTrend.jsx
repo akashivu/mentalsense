@@ -3,9 +3,7 @@ import axios from "axios";
 import { Line } from "react-chartjs-2";
 import { authHeader } from "../services/AuthService";
 
-
-
-export default function DailyTrend({ userId }) {
+export default function DailyTrend({ userId, mode = "combined" }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -17,7 +15,7 @@ export default function DailyTrend({ userId }) {
       try {
         setLoading(true);
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/daily-stress?days=7`,
+          `http://localhost:8080/user/${userId}/daily-stress?days=7&mode=${mode}`,
           { headers: authHeader() }
         );
         setData(res.data || []);
@@ -31,19 +29,31 @@ export default function DailyTrend({ userId }) {
     }
 
     load();
-  }, [userId]);
+  }, [userId, mode]); 
+
+  const labels = data.map((d) => d.day); 
+  const scores = data.map((d) => d.avgStress);
 
   
-  const labels = data.map((d) => d.day); 
+  const datasetLabel =
+    mode === "keystroke"
+      ? "7-Day Keystroke Stress Trend"
+      : mode === "emotion"
+      ? "7-Day Emotion Text Stress Trend"
+      : "7-Day Overall Stress Trend";
 
- 
-  const scores = data.map((d) => d.avgStress);
+  const titleText =
+    mode === "keystroke"
+      ? "Weekly Keystroke Stress Trend"
+      : mode === "emotion"
+      ? "Weekly Emotion Text Stress Trend"
+      : "Weekly Overall Stress Trend";
 
   const chartData = {
     labels,
     datasets: [
       {
-        label: "7-Day Stress Trend",
+        label: datasetLabel,
         data: scores,
         borderWidth: 2,
         tension: 0.3,
@@ -63,14 +73,14 @@ export default function DailyTrend({ userId }) {
     scales: {
       y: {
         beginAtZero: true,
-        suggestedMax: 1, 
+        suggestedMax: 1,
       },
     },
   };
 
   return (
     <div className="bg-white rounded-2xl shadow p-4 md:p-6 h-64 md:h-80">
-      <h2 className="text-lg font-bold mb-3">Weekly Stress Trend</h2>
+      <h2 className="text-lg font-bold mb-3">{titleText}</h2>
 
       {loading && (
         <p className="text-sm text-gray-500">Loading trend...</p>

@@ -41,7 +41,7 @@ export default function InsightsCard({ userId }) {
 
     (async () => {
       try {
-       
+       // check this endpoints in backend befor commit
         const [hourRes, dowRes, dailyRes] = await Promise.all([
           axios.get(
             `http://localhost:8080/user/${userId}/hourly-stress?days=7`,

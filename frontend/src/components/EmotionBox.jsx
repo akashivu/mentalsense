@@ -7,8 +7,8 @@ export default function EmotionBox({ onNewPrediction }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  const eventTimesRef = useRef([]); 
-  const keyDownMapRef = useRef({}); 
+  const eventTimesRef = useRef([]);
+  const keyDownMapRef = useRef({});
 
   const nowMs = () => new Date().getTime();
 
@@ -49,69 +49,116 @@ export default function EmotionBox({ onNewPrediction }) {
     setResult(null);
 
     try {
+      
       const rawEvents = eventTimesRef.current
         .filter((r) => r[1] != null && r[2] != null)
         .map((r) => [r[0], r[1], r[2]]);
 
-      
       const hasKeystrokes = rawEvents.length > 0;
-      const endpoint = hasKeystrokes ? "/predict/combined" : "/predict/emotion_text";
+      const endpoint = hasKeystrokes
+        ? "/predict/combined"
+        : "/predict/emotion_text";
       const url = `http://localhost:8080${endpoint}`;
 
       const payload = { raw_text: text };
       if (hasKeystrokes) payload.event_times = rawEvents;
 
-      const res = await axios.post(
-        url,
-        payload,
-        { headers: { "Content-Type": "application/json", ...authHeader() }, timeout: 15000 }
-      );
+      const res = await axios.post(url, payload, {
+        headers: {
+          "Content-Type": "application/json",
+          ...authHeader(),
+        },
+        timeout: 15000,
+      });
 
       const data = res.data || {};
 
      
-      const combinedScore = typeof data.combined_score === "number"
-        ? data.combined_score
-        : typeof data.adjusted_score === "number"
-        ? data.adjusted_score
-        : (typeof data.raw_score === "number" ? data.raw_score : null);
+      const mode = data.mode || (hasKeystrokes ? "combined" : "text_only");
+
+     
+
+      let combinedScore = null;
+      let textScore = null;
+      let keystrokeScore = null;
 
       const textMetrics = data.text_metrics ?? data.textMetrics ?? null;
-      
-      const keystrokeScore = data.keystroke_score ?? null;
-      const predictionId = data.prediction_id ?? data.predictionId ?? data.id ?? null;
+
+      if (mode === "combined") {
+        combinedScore =
+          typeof data.combined_score === "number"
+            ? data.combined_score
+            : null;
+
+       
+        if (typeof data.text_score === "number") {
+          textScore = data.text_score;
+        } else if (
+          textMetrics &&
+          typeof textMetrics.text_stress_score === "number"
+        ) {
+          textScore = textMetrics.text_stress_score;
+        }
+
+        if (typeof data.keystroke_score === "number") {
+          keystrokeScore = data.keystroke_score;
+        }
+      } else {
+       
+        textScore =
+          typeof data.adjusted_score === "number"
+            ? data.adjusted_score
+            : typeof data.raw_score === "number"
+            ? data.raw_score
+            : null;
+
+        
+        combinedScore = textScore;
+        keystrokeScore = null;
+      }
+
+      const predictionId =
+        data.prediction_id ?? data.predictionId ?? data.id ?? null;
 
       const timestamp = new Date().toISOString();
 
       const out = {
+        mode,
         combined_score: combinedScore,
-        text_metrics: textMetrics,
+        text_score: textScore,
         keystroke_score: keystrokeScore,
+        text_metrics: textMetrics,
         prediction_id: predictionId,
         raw_text: text,
         ts: timestamp,
-        source: endpoint === "/predict/combined" ? "combined" : "text_only",
       };
 
       setResult(out);
       if (onNewPrediction) onNewPrediction(out);
 
-      
       setText("");
       resetKeystrokeCapture();
     } catch (err) {
       console.error(err);
-      const msg = err.response?.data?.error || "Failed to analyze text. Try again.";
+      const msg =
+        err.response?.data?.error || "Failed to analyze text. Try again.";
       alert(msg);
     } finally {
       setLoading(false);
     }
   };
 
+ 
+  const formatPercent = (v) =>
+    v == null ? "—" : `${(v * 100).toFixed(1).replace(/\.0$/, "")}%`;
+
   return (
     <div className="w-full max-w-3xl bg-white rounded-lg shadow-sm border p-5">
       <form onSubmit={submit} className="space-y-3">
-        <label htmlFor="emotionText" className="block text-sm font-medium text-slate-700">
+        <label
+          htmlFor="emotionText"
+          className="block text-sm font-medium text-slate-700"
+        >
           How are you feeling?
         </label>
 
@@ -136,8 +183,20 @@ export default function EmotionBox({ onNewPrediction }) {
             {loading ? (
               <>
                 <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8z"
+                  />
                 </svg>
                 <span>Analyzing…</span>
               </>
@@ -162,27 +221,48 @@ export default function EmotionBox({ onNewPrediction }) {
       {result && (
         <div className="mt-4 bg-gray-50 p-4 rounded-md border">
           <div className="flex items-center justify-between">
+            
             <div className="text-sm text-slate-700">
-              <span className="font-semibold">Predicted:</span>{" "}
-              <span className="capitalize">{result.text_metrics?.label ?? "—"}</span>
+              <span className="font-semibold">Emotion:</span>{" "}
+              <span className="capitalize">
+                {result.text_metrics?.label ?? "—"}
+              </span>
+              <span className="ml-2 text-[11px] uppercase tracking-wide text-slate-400">
+                ({result.mode === "combined" ? "Text + Keystroke" : "Text-only"})
+              </span>
             </div>
 
+           
             <div className="text-sm">
-              <span className="text-slate-600">Combined:</span>{" "}
+              <span className="text-slate-600">Overall Stress:</span>{" "}
               <span
                 className={`font-semibold ${
-                  result.combined_score > 0.66 ? "text-red-600" : result.combined_score > 0.33 ? "text-amber-600" : "text-green-600"
+                  (result.combined_score ?? 0) > 0.66
+                    ? "text-red-600"
+                    : (result.combined_score ?? 0) > 0.33
+                    ? "text-amber-600"
+                    : "text-green-600"
                 }`}
               >
-                {result.combined_score != null ? `${Math.round(result.combined_score * 100)}%` : "—"}
+                {formatPercent(result.combined_score)}
               </span>
             </div>
           </div>
 
-          <div className="mt-2 text-xs text-slate-600">Keystroke score: {result.keystroke_score != null ? Math.round(result.keystroke_score * 100) + "%" : "—"}</div>
+        
+          <div className="mt-2 text-xs text-slate-600 space-y-1">
+            <div>
+              Text Stress: {formatPercent(result.text_score)}
+            </div>
+            <div>
+              Keystroke Stress: {formatPercent(result.keystroke_score)}
+            </div>
+          </div>
 
           <details className="mt-3">
-            <summary className="text-xs text-slate-600 cursor-pointer">Show text metrics</summary>
+            <summary className="text-xs text-slate-600 cursor-pointer">
+              Show text metrics
+            </summary>
             <pre className="mt-2 text-xs bg-white p-3 rounded-md border overflow-auto max-h-48">
               {JSON.stringify(result.text_metrics ?? {}, null, 2)}
             </pre>

@@ -4,8 +4,8 @@ import { authHeader } from "../services/AuthService";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
-export default function DowPattern({ userId, days = 28 }) {
-  const [dow, setDow] = useState(null); // null = no data yet
+export default function DowPattern({ userId, days = 28, mode = "combined" }) {
+  const [dow, setDow] = useState(null); 
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -21,13 +21,14 @@ export default function DowPattern({ userId, days = 28 }) {
     (async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/dow-stress?days=${days}`,
+          `http://localhost:8080/user/${userId}/dow-stress?days=${days}&mode=${mode}`,
           { headers: authHeader() }
         );
 
         const arr = res.data?.dow ?? [];
         if (!mounted) return;
 
+        
         const normalized = Array(7).fill(0);
         arr.forEach((v, i) => {
           if (i >= 0 && i < 7 && typeof v === "number") {
@@ -49,9 +50,7 @@ export default function DowPattern({ userId, days = 28 }) {
     return () => {
       mounted = false;
     };
-  }, [userId, days]);
-
-  // Loading state
+  }, [userId, days, mode]); 
   if (loading) {
     return (
       <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
@@ -60,7 +59,7 @@ export default function DowPattern({ userId, days = 28 }) {
     );
   }
 
-  // Empty / no meaningful data
+ 
   if (!dow || dow.length === 0 || dow.every((v) => v === 0)) {
     return (
       <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6 text-sm text-slate-500">
@@ -72,11 +71,19 @@ export default function DowPattern({ userId, days = 28 }) {
 
   const max = Math.max(...dow, 0.0001);
 
+ 
+  const title =
+    mode === "keystroke"
+      ? "Day-of-Week Keystroke Stress Pattern"
+      : mode === "emotion"
+      ? "Day-of-Week Emotion Text Stress Pattern"
+      : "Day-of-Week Overall Stress Pattern";
+
   return (
     <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-slate-800">
-          Day-of-Week Stress Pattern
+          {title}
         </h3>
         <div className="text-xs text-slate-500">Last {days} days</div>
       </div>

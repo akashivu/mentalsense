@@ -2,7 +2,11 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
 
-export default function DailyMoodCalendar({ userId, days = 28 }) {
+export default function DailyMoodCalendar({
+  userId,
+  days = 28,
+  mode = "combined",
+}) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -12,7 +16,7 @@ export default function DailyMoodCalendar({ userId, days = 28 }) {
     async function load() {
       try {
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/daily-stress?days=${days}`,
+          `http://localhost:8080/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
           { headers: authHeader() }
         );
         setData(res.data || []);
@@ -24,22 +28,22 @@ export default function DailyMoodCalendar({ userId, days = 28 }) {
     }
 
     load();
-  }, [userId, days]);
+  }, [userId, days, mode]);
 
- 
+  
   const stressByDay = new Map();
   data.forEach((d) => {
-    
+   
     stressByDay.set(d.day, d.avgStress);
   });
 
- 
+  
   const daysArray = [];
   const today = new Date();
   for (let i = days - 1; i >= 0; i--) {
     const date = new Date();
     date.setDate(today.getDate() - i);
-    const iso = date.toISOString().split("T")[0]; 
+    const iso = date.toISOString().split("T")[0];
     const label = date.getDate(); 
     const score = stressByDay.get(iso) ?? null;
     daysArray.push({ iso, label, score });
@@ -52,11 +56,27 @@ export default function DailyMoodCalendar({ userId, days = 28 }) {
     return "bg-red-400";
   };
 
+  
+  const title =
+    mode === "keystroke"
+      ? "Daily Keystroke Stress Calendar"
+      : mode === "emotion"
+      ? "Daily Emotion Text Stress Calendar"
+      : "Daily Overall Stress Calendar";
+
+  
+  const tooltipLabel =
+    mode === "keystroke"
+      ? "Avg keystroke stress"
+      : mode === "emotion"
+      ? "Avg emotion-based stress"
+      : "Avg stress";
+
   return (
     <div className="bg-white rounded-2xl shadow p-4 md:p-6">
       <div className="flex items-center justify-between mb-3">
         <h2 className="text-lg font-semibold text-slate-800">
-          Daily Mood Calendar
+          {title}
         </h2>
         <span className="text-xs text-slate-400">
           Last {days} days
@@ -74,11 +94,13 @@ export default function DailyMoodCalendar({ userId, days = 28 }) {
                 className={`h-7 w-7 md:h-8 md:w-8 rounded-lg flex items-center justify-center text-[10px] md:text-xs text-slate-800 ${getColorClass(
                   d.score
                 )}`}
-                title={`${d.iso} • ${
+                title={
                   d.score == null
-                    ? "No data"
-                    : `Avg stress: ${(d.score * 100).toFixed(0)}%`
-                }`}
+                    ? `${d.iso} • No data`
+                    : `${d.iso} • ${tooltipLabel}: ${(d.score * 100).toFixed(
+                        0
+                      )}%`
+                }
               >
                 {d.label}
               </div>

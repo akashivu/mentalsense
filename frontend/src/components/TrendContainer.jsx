@@ -51,7 +51,7 @@ export default function TrendContainer({ userId = 1 }) {
       
       setAnomaly(r?.anomaly ?? null);
       if (r?.anomaly === -1) {
-        alert("⚠ Anomaly detected!");
+        alert("Anomaly detected!");
       }
     } catch (e) {
       console.error("anomaly check error:", e);
