@@ -2,15 +2,7 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
 
-const DAY_NAMES = [
-  "Sunday",
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-];
+const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
 function formatHourRange(h) {
   if (h == null || isNaN(h)) return "Not enough data";
@@ -27,7 +19,7 @@ function formatHourRange(h) {
   return `${toLabel(start)} – ${toLabel(end)}`;
 }
 
-export default function InsightsCard({ userId }) {
+export default function InsightCard({ userId }) {
   const [hourly, setHourly] = useState(Array(24).fill(0));
   const [dow, setDow] = useState(Array(7).fill(0));
   const [weekInsight, setWeekInsight] = useState(null);
@@ -41,7 +33,6 @@ export default function InsightsCard({ userId }) {
 
     (async () => {
       try {
-       // check this endpoints in backend befor commit
         const [hourRes, dowRes, dailyRes] = await Promise.all([
           axios.get(
             `http://localhost:8080/user/${userId}/hourly-stress?days=7`,
@@ -59,7 +50,6 @@ export default function InsightsCard({ userId }) {
 
         if (!mounted) return;
 
-        
         const hArr = hourRes.data?.hours ?? [];
         const hNorm = Array(24).fill(0);
         hArr.forEach((v, i) => {
@@ -67,7 +57,6 @@ export default function InsightsCard({ userId }) {
         });
         setHourly(hNorm);
 
-        
         const dArr = dowRes.data?.dow ?? [];
         const dNorm = Array(7).fill(0);
         dArr.forEach((v, i) => {
@@ -75,7 +64,6 @@ export default function InsightsCard({ userId }) {
         });
         setDow(dNorm);
 
-        
         const rawDaily = Array.isArray(dailyRes.data) ? dailyRes.data : [];
         const dailyAvgs = rawDaily
           .map((d) => d.avg ?? d.average ?? d.daily_average ?? d.value)
@@ -115,7 +103,6 @@ export default function InsightsCard({ userId }) {
     };
   }, [userId]);
 
- 
   let maxHourIndex = null;
   if (hourly.some((v) => v > 0)) {
     maxHourIndex = hourly.reduce(
@@ -125,7 +112,6 @@ export default function InsightsCard({ userId }) {
     );
   }
 
-  
   let maxDowIndex = null;
   if (dow.some((v) => v > 0)) {
     maxDowIndex = dow.reduce(
@@ -135,7 +121,6 @@ export default function InsightsCard({ userId }) {
     );
   }
 
-  
   let minDowIndex = null;
   const nonZeroDays = dow
     .map((v, i) => ({ v, i }))
@@ -164,44 +149,69 @@ export default function InsightsCard({ userId }) {
   }
 
   return (
-    <div className="w-full max-w-3xl bg-white rounded-lg border p-5 shadow-sm mt-6">
-      <h3 className="text-sm font-medium text-slate-800 mb-2">
+    <div className="bg-white rounded-3xl shadow-[0_12px_35px_rgba(15,23,42,0.08)] p-6 
+      transition-all duration-300 hover:scale-[1.02] hover:shadow-[0_20px_50px_rgba(15,23,42,0.12)]">
+      
+      <h3 className="text-lg font-semibold text-[#0F172A] mb-4">
         Your Insights
       </h3>
 
       {loading && (
-        <div className="text-xs text-slate-500">Calculating insights…</div>
+        <div className="text-sm text-slate-500">Calculating insights…</div>
       )}
 
       {!loading && (
-        <ul className="text-sm text-slate-700 list-disc ml-4 space-y-1">
-          <li>
-            Most stressful hour (recent):{" "}
-            <b>
-              {maxHourIndex != null
-                ? formatHourRange(maxHourIndex)
-                : "Not enough data yet"}
-            </b>
-          </li>
+        <div className="space-y-4">
+          <div className="p-4 bg-blue-50 rounded-xl border-2 border-blue-100">
+            <div className="flex items-start gap-3">
+              <span className="text-xl shrink-0">🕐</span>
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A] mb-1">Most stressful hour</p>
+                <p className="text-sm text-slate-600">
+                  {maxHourIndex != null
+                    ? formatHourRange(maxHourIndex)
+                    : "Not enough data yet"}
+                </p>
+              </div>
+            </div>
+          </div>
 
-          <li>
-            Most stressful day (recent):{" "}
-            <b>
-              {maxDowIndex != null
-                ? DAY_NAMES[maxDowIndex]
-                : "Not enough data"}
-            </b>
-          </li>
+          <div className="p-4 bg-purple-50 rounded-xl border-2 border-purple-100">
+            <div className="flex items-start gap-3">
+              <span className="text-xl shrink-0">📅</span>
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A] mb-1">Most stressful day</p>
+                <p className="text-sm text-slate-600">
+                  {maxDowIndex != null
+                    ? DAY_NAMES[maxDowIndex]
+                    : "Not enough data"}
+                </p>
+              </div>
+            </div>
+          </div>
 
           {minDowIndex != null && (
-            <li>
-              You tend to be calmest on:{" "}
-              <b>{DAY_NAMES[minDowIndex]}</b>
-            </li>
+            <div className="p-4 bg-emerald-50 rounded-xl border-2 border-emerald-100">
+              <div className="flex items-start gap-3">
+                <span className="text-xl shrink-0">✨</span>
+                <div>
+                  <p className="text-sm font-semibold text-[#0F172A] mb-1">You're calmest on</p>
+                  <p className="text-sm text-slate-600">{DAY_NAMES[minDowIndex]}</p>
+                </div>
+              </div>
+            </div>
           )}
 
-          <li>{weekText}</li>
-        </ul>
+          <div className="p-4 bg-amber-50 rounded-xl border-2 border-amber-100">
+            <div className="flex items-start gap-3">
+              <span className="text-xl shrink-0">📊</span>
+              <div>
+                <p className="text-sm font-semibold text-[#0F172A] mb-1">Weekly comparison</p>
+                <p className="text-sm text-slate-600">{weekText}</p>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </div>
   );
