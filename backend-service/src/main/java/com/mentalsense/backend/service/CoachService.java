@@ -29,19 +29,21 @@ public class CoachService {
         return generateAdvice(ctx);
     }
 
+    // Gather signals used to generate user-specific advice
     private Map<String, Object> collectContext(Long userId) {
         Map<String, Object> ctx = new HashMap<>();
-
 
         LocalDate now = LocalDate.now();
         LocalDate lastWeekStart = now.minusDays(7);
         LocalDate prevWeekStart = now.minusDays(14);
 
+        // Weekly averages (may return null from repo)
         Double thisWeekAvg = dailyStressRepo.avgStressBetween(userId, lastWeekStart, now);
         Double lastWeekAvg = dailyStressRepo.avgStressBetween(userId, prevWeekStart, lastWeekStart);
         if (thisWeekAvg == null) thisWeekAvg = 0.0;
         if (lastWeekAvg == null) lastWeekAvg = 0.0;
 
+        // Small hysteresis (+/-0.05) to avoid jittery trend labels
         String trend;
         if (thisWeekAvg > lastWeekAvg + 0.05) {
             trend = "increasing";
@@ -55,12 +57,12 @@ public class CoachService {
         ctx.put("lastWeekAvg", lastWeekAvg);
         ctx.put("trend", trend);
 
-
+        // Latest individual score from history (most recent entry)
         List<StressHistory> history = stressHistoryRepo.findByUserIdOrderByCreatedAtDesc(userId);
         Double latestScore = history.isEmpty() ? null : history.get(0).getStressScore();
         ctx.put("latestScore", latestScore);
 
-
+        // Hourly averages for last 7 days
         Instant from = Instant.now().minusSeconds(7L * 24 * 3600);
         double[] byHour = new double[24];
         List<Object[]> hourly = stressHistoryRepo.findHourlyAvgStress(userId, from);
@@ -73,7 +75,7 @@ public class CoachService {
         }
         ctx.put("byHour", byHour);
 
-
+        // Day-of-week averages for last 28 days
         Instant fromDow = Instant.now().minusSeconds(28L * 24 * 3600);
         double[] byDow = new double[7];
         List<Object[]> dowRows = stressHistoryRepo.findDowAvgStress(userId, fromDow);
@@ -86,7 +88,7 @@ public class CoachService {
         }
         ctx.put("byDow", byDow);
 
-
+        // Count of recent very-high combined scores (used for escalation suggestions)
         List<Double> recentScores = emotionPredictionRepo
                 .findTopCombinedScoresForUser(userId, PageRequest.of(0, 50));
 
@@ -112,7 +114,7 @@ public class CoachService {
         List<String> tips = new ArrayList<>();
         List<String> tags = new ArrayList<>();
 
-
+        // Severity buckets drive tone and escalation suggestions
         String severity;
         if (thisWeek >= 0.7 || (latest != null && latest >= 0.8)) {
             severity = "HIGH";
@@ -122,10 +124,10 @@ public class CoachService {
             severity = "LOW";
         }
 
-
         String title;
         StringBuilder summary = new StringBuilder();
 
+        // Human-friendly trend/title and short summary
         if ("increasing".equals(trend) && thisWeek > lastWeek) {
             title = "Your stress has been increasing recently";
             summary.append("Your average stress this week is higher than last week. ");
@@ -146,7 +148,7 @@ public class CoachService {
                     .append("%.");
         }
 
-
+        // Peak hour analysis — suggest concrete actions tied to time-of-day
         int peakHour = maxIndex(byHour);
         if (byHour[peakHour] > 0) {
             if (peakHour >= 21 || peakHour <= 5) {
@@ -165,7 +167,7 @@ public class CoachService {
             }
         }
 
-
+        // Day-of-week pattern — short actionable suggestions
         int peakDow = maxIndex(byDow);
         String[] dowNames = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
         if (byDow[peakDow] > 0) {
@@ -178,14 +180,14 @@ public class CoachService {
             }
         }
 
-
+        // Escalation hints if many recent high scores
         if (recentHighCount >= 5) {
             tags.add("frequent-high");
             tips.add("You've had several very high stress moments recently. Consider talking to someone you trust about it.");
             tips.add("If stress feels unmanageable, consider reaching out to a mental health professional.");
         }
 
-
+        // Generic fallback tips
         if (tips.isEmpty()) {
             tips.add("Take short breaks away from screens during the day.");
             tips.add("Pay attention to when your body feels tense and do a quick stretch.");
@@ -201,6 +203,7 @@ public class CoachService {
         return resp;
     }
 
+    // Utility: return index of max element (works with padded arrays)
     private int maxIndex(double[] arr) {
         int idx = 0;
         double max = Double.NEGATIVE_INFINITY;

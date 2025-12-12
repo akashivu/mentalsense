@@ -29,8 +29,7 @@ public class KeystrokeController {
     @PostMapping("/log")
     public ResponseEntity<?> log(@RequestBody Map<String, Object> body, HttpServletRequest request) {
 
-
-
+        // Ensure request is authenticated and get user id from JWT filter
         Object uid = request.getAttribute("userId");
         if (uid == null) {
             return ResponseEntity.status(401).body(Map.of("error", "Unauthorized"));
@@ -43,17 +42,18 @@ public class KeystrokeController {
             userId = Long.valueOf(uid.toString());
         }
 
-
+        // Support two possible names for raw text from frontend
         Object rawTextObj = body.get("raw_text");
         if (rawTextObj == null) rawTextObj = body.get("rawSample");
         String rawText = rawTextObj == null ? "" : rawTextObj.toString();
 
-
+        // Prepare ML request payload
         Map<String, Object> mlReq = Map.of(
                 "event_times", body.get("event_times"),
                 "raw_text", rawText
         );
 
+        // Call keystroke ML service (best-effort — failure is non-fatal)
         Double mlStress = null;
         try {
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(
@@ -63,6 +63,7 @@ public class KeystrokeController {
             );
             Map mlBody = mlRes.getBody();
             if (mlBody != null) {
+                // The ML service may return the score under different keys
                 if (mlBody.get("stress_score") != null) {
                     mlStress = Double.valueOf(mlBody.get("stress_score").toString());
                 } else if (mlBody.get("confidence") != null) {
@@ -72,11 +73,11 @@ public class KeystrokeController {
                 }
             }
         } catch (Exception ex) {
+            // Log and continue — keystroke logging should not fail the whole request
             System.err.println("ML call failed: " + ex.getMessage());
         }
 
-
-
+        // Persist keystroke features (tolerant parsing with fallback)
         KeystrokeLog savedKeystroke;
         try {
             KeystrokeLog k = new KeystrokeLog();
@@ -94,9 +95,9 @@ public class KeystrokeController {
 
             k.setRawSample(rawText);
 
+            // event_times may be a List<Integer>; attempt to cast but ignore on failure
             if (body.get("event_times") instanceof java.util.List) {
                 try {
-
                     k.setEventTimes((java.util.List<Integer>) body.get("event_times"));
                 } catch (ClassCastException ignored) {
                 } catch (NoSuchMethodError ignored) {
@@ -106,16 +107,16 @@ public class KeystrokeController {
             savedKeystroke = repo.save(k);
 
         } catch (Exception e) {
-            // Fallback if any feature parsing fails
+            // If parsing fails, fall back to saving minimal record so we don't lose data
             KeystrokeLog k = new KeystrokeLog();
             k.setUserId(userId);
             k.setRawSample(rawText);
             savedKeystroke = repo.save(k);
         }
 
+        // Create a StressHistory entry from saved keystroke + ML score
         StressHistory history = new StressHistory();
         history.setUserId(userId);
-
 
         history.setTypingSpeed(savedKeystroke.getTypingSpeed());
         history.setAvgKeyHold(savedKeystroke.getAvgKeyHold());
@@ -126,16 +127,14 @@ public class KeystrokeController {
             history.setStressScore(mlStress);
         } else {
             history.setKeystrokeScore(null);
-            history.setStressScore(0.0); // or null if you want to ignore it in combined stats
+            history.setStressScore(0.0); // default when ML not available
         }
 
         history.setCreatedAt(Instant.now());
 
         StressHistory savedHistory = stressHistoryRepo.save(history);
 
-
-        // Response to frontend
-
+        // Return both the raw keystroke record and the derived history to frontend
         return ResponseEntity.ok(Map.of(
                 "keystroke", savedKeystroke,
                 "history", savedHistory,

@@ -25,6 +25,7 @@ public class UserMlController {
     private RestTemplate template;
 
 
+    // Local ML service base URL (development)
     private static final String ML_BASE = "http://localhost:8000";
 
 
@@ -32,7 +33,7 @@ public class UserMlController {
     public ResponseEntity<?> trend(@PathVariable Long id) {
         List<StressHistory> history = historyRepo.findByUserIdOrderByCreatedAtAsc(id);
 
-
+        // Extract numeric stressScore values, skip non-numeric / null entries
         List<Double> values = history.stream()
                 .map(StressHistory::getStressScore)
                 .filter(Objects::nonNull)
@@ -50,7 +51,9 @@ public class UserMlController {
 
         final int required = 10;
 
-
+        // Ensure we always send exactly `required` values to ML
+        // - If no history, send zeros
+        // - If fewer than required, pad with last known value
         if (values.isEmpty()) {
             for (int i = 0; i < required; i++) values.add(0.0);
         } else {
@@ -68,10 +71,12 @@ public class UserMlController {
             ResponseEntity<Map> res = template.postForEntity(ML_BASE + "/predict/trend", req, Map.class);
             return ResponseEntity.ok(res.getBody());
         } catch (HttpClientErrorException.BadRequest bad) {
+            // ML rejected the payload — surface ML response for easier debugging
             logger.error("ML service rejected payload: {} -> {}", req, bad.getResponseBodyAsString());
             Map<String, Object> err = Map.of("error", "ML service rejected payload", "details", bad.getResponseBodyAsString());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
         } catch (Exception e) {
+            // Generic ML failure handling
             logger.error("ML service call failed", e);
             Map<String, Object> err = Map.of("error", "ML service error", "details", e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(err);
@@ -80,10 +85,7 @@ public class UserMlController {
 
 
 
+    // Note: duplicate logger variable left here (unused).
     private static final Logger log = LoggerFactory.getLogger(UserMlController.class);
-
-
-
-
 
 }

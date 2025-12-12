@@ -29,29 +29,28 @@ public class PredictionController {
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // endpoints
+    // ML endpoints (local during development)
     private final String ML_URL      = "http://localhost:8000/predict/combined";
     private final String ML_TEXT_URL = "http://localhost:8000/predict/emotion_text";
 
 
     // Combined Prediction (text + keystroke)
-
     @PostMapping("/combined")
     public ResponseEntity<?> predictCombined(
             @RequestBody Map<String, Object> body,
             HttpServletRequest request) {
 
         try {
-
             String rawText    = getString(body, "raw_text");
             Object eventTimes = body.get("event_times");
             Object kfObj      = body.get("keystroke_features");
 
+            // Require at least one input source
             if (isEmpty(rawText) && eventTimes == null && kfObj == null) {
                 return bad("Provide raw_text or event_times or keystroke_features");
             }
 
-
+            // Build ML request payload
             Map<String, Object> mlReq = new HashMap<>();
             mlReq.put("raw_text", rawText);
             if (eventTimes != null)     mlReq.put("event_times", eventTimes);
@@ -61,10 +60,9 @@ public class PredictionController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
-
+            // Best-effort ML call
             Map<String, Object> mlRes = callMl(ML_URL, entity);
             if (mlRes == null) return fail("ML returned null");
-
 
             Map<String, Object> textMetrics = castMap(mlRes.get("text_metrics"));
 
@@ -83,13 +81,12 @@ public class PredictionController {
                 return fail("ML did not return combined_stress_score");
             }
 
-
             Long userId = getUserId(request);
 
-
+            // Adjust combined score using user's baseline (if available)
             Double adjustedScore = adjustByBaseline(userId, combinedScore);
 
-
+            // Persist EmotionPrediction (text metrics + combined)
             EmotionPrediction ep = new EmotionPrediction();
             ep.setUserId(userId);
             ep.setText(rawText);
@@ -105,7 +102,7 @@ public class PredictionController {
             }
 
             if (textStress != null) {
-                ep.setStressScore(textStress);   // text-only score
+                ep.setStressScore(textStress);   // store text-only score too
             }
 
             ep.setCombinedScore(adjustedScore);  // baseline-adjusted combined
@@ -113,7 +110,7 @@ public class PredictionController {
             ep.setCreatedAt(Instant.now());
             repo.save(ep);
 
-
+            // Save derived StressHistory (used for trends/graphs)
             StressHistory sh = new StressHistory();
             sh.setUserId(userId);
             sh.setStressScore(adjustedScore);     // overall (combined, adjusted)
@@ -122,14 +119,13 @@ public class PredictionController {
             sh.setCreatedAt(Instant.now());
             historyRepo.save(sh);
 
-
             return ok(Map.of(
                     "mode", "combined",
                     "combined_score", adjustedScore,
                     "raw_combined_score", combinedScore,
                     "text_score", textStress,
                     "keystroke_score", keystrokeScore,
-                    "text_metrics", textMetrics,       // 🔥 for EmotionBox
+                    "text_metrics", textMetrics,       // used by frontend EmotionBox
                     "prediction_id", ep.getId()
             ));
 
@@ -140,7 +136,6 @@ public class PredictionController {
 
 
     // Text-Only Prediction
-
     @PostMapping("/emotion_text")
     public ResponseEntity<?> predictText(
             @RequestBody Map<String, Object> body,
@@ -152,14 +147,11 @@ public class PredictionController {
                 return bad("Provide raw_text");
             }
 
-
-
             HttpEntity<Map<String, Object>> entity =
                     new HttpEntity<>(Map.of("text", rawText), createHeaders());
 
             Map<String, Object> mlRes = callMl(ML_TEXT_URL, entity);
             if (mlRes == null) return fail("ML returned null");
-
 
             Map<String, Object> result = castMap(mlRes.get("result"));
             if (result == null) {
@@ -177,12 +169,10 @@ public class PredictionController {
                 return fail("ML did not return text_stress_score or score");
             }
 
-
             Long userId = getUserId(request);
 
-
+            // For text-only, adjust by baseline but don't treat as overall combined
             Double adjustedScore = adjustByBaseline(userId, rawTextScore);
-
 
             EmotionPrediction ep = new EmotionPrediction();
             ep.setUserId(userId);
@@ -202,23 +192,20 @@ public class PredictionController {
             ep.setCreatedAt(Instant.now());
             repo.save(ep);
 
-
+            // Perisst history but avoid polluting combined score (text-only shouldn't override combined)
             StressHistory sh = new StressHistory();
             sh.setUserId(userId);
-
-            // text-only should NOT pollute combined
-            sh.setStressScore(null);
+            sh.setStressScore(null);      // keep combined empty for text-only entries
             sh.setTextScore(rawTextScore);
             sh.setKeystrokeScore(null);
             sh.setCreatedAt(Instant.now());
             historyRepo.save(sh);
 
-
             return ok(Map.of(
                     "mode", "text_only",
                     "adjusted_score", adjustedScore,
                     "raw_score", rawTextScore,
-                    "text_metrics", textMetrics,   // 🔥 for EmotionBox
+                    "text_metrics", textMetrics,   // used by frontend EmotionBox
                     "prediction_id", ep.getId()
             ));
 
@@ -270,6 +257,7 @@ public class PredictionController {
         return h;
     }
 
+    // Wrapper around RestTemplate call — returns null on failure
     private Map<String, Object> callMl(String url, HttpEntity<?> request) {
         try {
             ResponseEntity<Map> res = restTemplate.postForEntity(url, request, Map.class);
@@ -280,6 +268,7 @@ public class PredictionController {
         return null;
     }
 
+    // Shift score using user's baseline to normalize per-user values
     private double adjustByBaseline(Long userId, Double score) {
         if (score == null) return 0.0;
 
@@ -298,7 +287,6 @@ public class PredictionController {
             return score;
         }
     }
-
 
     private ResponseEntity<?> ok(Object body) {
         return ResponseEntity.ok(body);

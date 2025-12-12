@@ -20,9 +20,25 @@ public class User {
     private Double baselineStress = 0.0;
     private Double baselineTypingSpeed = 0.0;
     private Instant createdAt = Instant.now();
-
+    private String avatar;       // Google profile pic URL
+    private String authProvider;
     public User() {}
 
+    public String getAvatar() {
+        return avatar;
+    }
+
+    public void setAvatar(String avatar) {
+        this.avatar = avatar;
+    }
+
+    public String getAuthProvider() {
+        return authProvider;
+    }
+
+    public void setAuthProvider(String authProvider) {
+        this.authProvider = authProvider;
+    }
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

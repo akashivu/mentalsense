@@ -22,6 +22,7 @@ public class UserModelController {
     @Autowired
     private RestTemplate restTemplate;
 
+    // Local ML service base (developnent)
     private final String ML_BASE = "http://localhost:8000";
 
 
@@ -33,7 +34,7 @@ public class UserModelController {
         try {
             if (body == null) body = new HashMap<>();
 
-
+            // If caller didn't supply values, gather user stress history values
             if (!body.containsKey("values")) {
                 List<StressHistory> list = stressRepo.findByUserIdOrderByCreatedAtAsc(userId);
                 List<Double> arr = new ArrayList<>();
@@ -45,11 +46,11 @@ public class UserModelController {
                 body.put("values", arr);
             }
 
-
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
+            // Forward training request to mL service
             String url = ML_BASE + "/user/" + userId + "/train-models";
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
@@ -72,10 +73,10 @@ public class UserModelController {
             @RequestBody Map<String, Object> body
     ) {
         try {
+            // Expect past_values in payload
             if (!body.containsKey("past_values")) {
                 return ResponseEntity.badRequest().body(Map.of("error", "past_values required"));
             }
-
 
             Map<String, Object> mlReq = new HashMap<>();
             mlReq.put("past_values", body.get("past_values"));
@@ -84,6 +85,7 @@ public class UserModelController {
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
+            // Delegate trend prediction to per-user ML endpoint
             String url = ML_BASE + "/user/" + userId + "/trend";
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
@@ -105,8 +107,9 @@ public class UserModelController {
             @RequestBody Map<String, Object> body
     ) {
         try {
-          Map<String, Object> mlReq = new HashMap<>();
+            Map<String, Object> mlReq = new HashMap<>();
 
+            // Support multiple input styles for anomaly detection
             if (body.containsKey("value")) {
                 mlReq.put("value", body.get("value"));
             }
@@ -118,8 +121,10 @@ public class UserModelController {
             }
 
             HttpHeaders headers = new HttpHeaders();
-            headers.setContentType(MediaType.APPLICATION_JSON);HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
+            headers.setContentType(MediaType.APPLICATION_JSON);
+            HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
+            // Call generic anomaly endpoint on ML service
             String url = ML_BASE + "/predict/anomaly";
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
@@ -127,18 +132,20 @@ public class UserModelController {
 
         } catch (RestClientException ex) {
             return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-    .body(Map.of("error", "ML service unavailable", "detail", ex.getMessage()));
+                    .body(Map.of("error", "ML service unavailable", "detail", ex.getMessage()));
         } catch (Exception ex) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body(Map.of("error", ex.getMessage()));
         }
     }
+
     @GetMapping("/{userId}/anomalies")
     public ResponseEntity<?> getAnomalies(
             @PathVariable Long userId,
             @RequestParam(defaultValue = "30") int limit
     ) {
 
+        // TODO implement server-side anomalies listing (currently returns empty list)
         return ResponseEntity.ok(Collections.emptyList());
     }
 

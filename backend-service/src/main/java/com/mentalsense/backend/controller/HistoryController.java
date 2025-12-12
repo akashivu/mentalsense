@@ -20,12 +20,12 @@ public class HistoryController {
         this.stressHistoryRepo = stressHistoryRepo;
     }
 
-
     @GetMapping("/history/{id}")
     public ResponseEntity<?> getHistory(
             @PathVariable Long id,
             HttpServletRequest request) {
 
+        // Only allow user to access their own history
         Object uAttr = request.getAttribute("userId");
         if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -38,7 +38,6 @@ public class HistoryController {
         return ResponseEntity.ok(list);
     }
 
-
     @GetMapping({"/user/{id}/daily-stress", "/user/{id}/daily_stress"})
     public ResponseEntity<?> getDailyStress(
             @PathVariable Long id,
@@ -46,6 +45,7 @@ public class HistoryController {
             @RequestParam(defaultValue = "combined") String mode,
             HttpServletRequest request) {
 
+        // Enforce user-level access control
         Object uAttr = request.getAttribute("userId");
         if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -54,14 +54,14 @@ public class HistoryController {
 
         Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
 
-
+        // Pick stress source based on mode
         var rows = switch (mode.toLowerCase()) {
             case "keystroke" -> stressHistoryRepo.findDailyAvgKeystroke(id, from);
             case "emotion"   -> stressHistoryRepo.findDailyAvgText(id, from);
             default          -> stressHistoryRepo.findDailyAvgCombined(id, from);
         };
 
-
+        // Normalize rows into a simple list of day → average stress
         var list = rows.stream().map(r -> {
             String day = r[0].toString();
             double avg = ((Number) r[1]).doubleValue();
@@ -75,9 +75,7 @@ public class HistoryController {
         return ResponseEntity.ok(list);
     }
 
-
-    // Hourly stress
-
+    // Hourly stress trends
     @GetMapping("/user/{id}/hourly-stress")
     public ResponseEntity<?> getHourlyStress(
             @PathVariable Long id,
@@ -93,6 +91,7 @@ public class HistoryController {
 
         Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
 
+        // Fetch hourly averages depending on mode
         var rows = switch (mode.toLowerCase()) {
             case "keystroke" -> stressHistoryRepo.findHourlyAvgKeystroke(id, from);
             case "emotion"   -> stressHistoryRepo.findHourlyAvgText(id, from);
@@ -101,6 +100,7 @@ public class HistoryController {
 
         double[] byHour = new double[24];
 
+        // Each row: [hour, average_stress]
         for (Object[] r : rows) {
             int hour = ((Number) r[0]).intValue();
             double avg = ((Number) r[1]).doubleValue();
@@ -112,9 +112,7 @@ public class HistoryController {
         return ResponseEntity.ok(Map.of("hours", byHour));
     }
 
-
-    // Day-of-week stress
-
+    // Day-of-week stress pattern
     @GetMapping("/user/{id}/dow-stress")
     public ResponseEntity<?> getDowStress(
             @PathVariable Long id,
@@ -130,6 +128,7 @@ public class HistoryController {
 
         Instant from = Instant.now().minusSeconds(days * 24L * 3600L);
 
+        // Day-of-week averages for different modes
         var rows = switch (mode.toLowerCase()) {
             case "keystroke" -> stressHistoryRepo.findDowAvgKeystroke(id, from);
             case "emotion"   -> stressHistoryRepo.findDowAvgText(id, from);
@@ -142,8 +141,8 @@ public class HistoryController {
             int dow = ((Number) r[0]).intValue();
             Number avgNum = (Number) r[1];
             if (avgNum == null) continue;
-            double avg = avgNum.doubleValue();
 
+            double avg = avgNum.doubleValue();
             if (dow >= 0 && dow < 7) {
                 byDow[dow] = avg;
             }
@@ -152,9 +151,7 @@ public class HistoryController {
         return ResponseEntity.ok(Map.of("dow", byDow));
     }
 
-
-    // Engagement
-
+    // Engagement count (how many stress entries per day)
     @GetMapping("/user/{id}/engagement")
     public ResponseEntity<?> getEngagement(
             @PathVariable Long id,
@@ -178,9 +175,6 @@ public class HistoryController {
         return ResponseEntity.ok(list);
     }
 
-
-
-
     @GetMapping("/user/{id}/weekly-stats")
     public ResponseEntity<?> getWeeklyStats(
             @PathVariable Long id,
@@ -197,6 +191,7 @@ public class HistoryController {
         Instant lastWeekStart = now.minusSeconds(7 * 24L * 3600L);
         Instant prevWeekStart = now.minusSeconds(14 * 24L * 3600L);
 
+        // Compare average stress between two weeks
         double thisWeekAvg = getAvg(id, lastWeekStart, now, mode);
         double lastWeekAvg = getAvg(id, prevWeekStart, lastWeekStart, mode);
 
@@ -213,6 +208,7 @@ public class HistoryController {
         ));
     }
 
+    // Helper for averaging over a period
     private double getAvg(Long id, Instant from, Instant to, String mode) {
         Double avgObj = switch (mode.toLowerCase()) {
             case "keystroke" -> stressHistoryRepo.avgKeystrokeBetween(id, from, to);

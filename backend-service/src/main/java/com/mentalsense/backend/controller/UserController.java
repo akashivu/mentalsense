@@ -33,11 +33,11 @@ public class UserController {
 
     public UserController(StressHistoryRepo stressHistoryRepo,
                           UserRepo userRepo,
-                          DailyStressRepo dailyStressRepo,EmotionPredictionRepo emotionPredictionRepo) {
+                          DailyStressRepo dailyStressRepo, EmotionPredictionRepo emotionPredictionRepo) {
         this.stressHistoryRepo = stressHistoryRepo;
         this.userRepo = userRepo;
         this.dailyStressRepo = dailyStressRepo;
-        this.emotionPredictionRepo=emotionPredictionRepo;
+        this.emotionPredictionRepo = emotionPredictionRepo;
     }
 
     @PutMapping("/{id}/baseline")
@@ -46,6 +46,8 @@ public class UserController {
         Optional<User> uOpt = userRepo.findById(id);
         if (uOpt.isEmpty()) return ResponseEntity.status(404).build();
         User u = uOpt.get();
+
+        // Allow partial updates for baseline fields
         if (body.containsKey("baselineTypingSpeed"))
             u.setBaselineTypingSpeed(Double.valueOf(body.get("baselineTypingSpeed").toString()));
         if (body.containsKey("baselineStress"))
@@ -57,11 +59,13 @@ public class UserController {
     @PutMapping("/{id}/baseline/compute")
     public ResponseEntity<?> computeBaseline(@PathVariable Long id) {
         List<StressHistory> list = stressHistoryRepo.findByUserIdOrderByCreatedAtAsc(id);
+        // Need enough samples to compute a meaningful baseline
         if (list == null || list.size() < 5) {
             return ResponseEntity.badRequest().body(Map.of("error", "need 5+ samples"));
         }
 
         int N = 20;
+        // Use up to last N samples for baseline calculation
         List<StressHistory> last = list.size() > N
                 ? list.subList(list.size() - N, list.size())
                 : list;
@@ -79,34 +83,32 @@ public class UserController {
         return ResponseEntity.ok(Map.of("baseline", baseline));
     }
 
-
     @GetMapping("/{id}/anomalies")
     public ResponseEntity<?> getAnomalies(
             @PathVariable Long id,
             @RequestParam(defaultValue = "30") int limit,
             HttpServletRequest request) {
 
-
+        // Only allow users to query their own anomalies
         Object uAttr = request.getAttribute("userId");
         if (uAttr == null || !id.equals(Long.valueOf(uAttr.toString()))) {
             return ResponseEntity.status(HttpStatus.FORBIDDEN)
                     .body(Map.of("error", "not allowed"));
         }
 
-
+        // Normalize limit to reasonable bounds
         if (limit <= 0) limit = 10;
         if (limit > 200) limit = 200;
 
-        double threshold = 0.75;
-
+        double threshold = 0.75; // anomaly cutoff
 
         Pageable pageable = PageRequest.of(0, limit);
 
-
+        // Repo method returns the top anomaly predictions for the user
         List<EmotionPrediction> list =
                 emotionPredictionRepo.findAnomaliesForUser(id, threshold, pageable);
 
-
+        // Map to minimal response structure
         List<Map<String, Object>> res = list.stream()
                 .map(ep -> {
                     Map<String, Object> m = new HashMap<>();
