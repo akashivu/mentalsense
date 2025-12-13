@@ -1,53 +1,38 @@
 # =====================
-# Global ignores (ROOT)
-# =====================
-
-# Environment
-.env
-
-# IDEs
-.idea/
-.vscode/
-
-# OS
-.DS_Store
-
-# =====================
-# Java
-# =====================
-target/
-*.log
-hs_err_pid*.log
-replay_pid*.log
-
-# =====================
-# Node
-# =====================
-node_modules/
-
-# =====================
-# Python / ML
+# Python cache
 # =====================
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
 
+# =====================
+# Virtual environments
+# =====================
 .venv/
+.venv310/
 venv/
-venv_mlservice_backup/
 
 # =====================
-# ML artifacts
+# IDE
 # =====================
+.vscode/
+
+# =====================
+# Logs
+# =====================
+*.log
+
+# =====================
+# ML artifacts (DO NOT COMMIT)
+# =====================
+models/
 *.h5
 *.pkl
 *.joblib
 *.csv
-models/
 
 # =====================
-# Archives / backups
+# OS
 # =====================
-*.tgz
-mentalsense-backup/
+.DS_Store
