@@ -1,13 +1,10 @@
-// src/pages/Register.jsx
+
 import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { register } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
 
-/**
- * Register page styled exactly like the Login form (same card, spacing, look).
- * On success -> navigates to /login?email=...&registered=true
- */
+
 
 export default function Register() {
   const navigate = useNavigate();
@@ -19,24 +16,31 @@ export default function Register() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  async function onSubmit(e) {
-    e.preventDefault();
-    setError("");
-    setLoading(true);
+ async function onSubmit(e) {
+  e.preventDefault();
+  setError("");
+  setLoading(true);
 
-    try {
-      await register(name, email, password);
+  try {
+    const res = await register(name, email, password);
 
-      // navigate back to login with prefill params
-      navigate(`/login?email=${encodeURIComponent(email)}&registered=true`);
-    } catch (err) {
-      setError(err?.response?.data?.error || err?.message || "Registration failed");
-    } finally {
-      setLoading(false);
-    }
+    // OPTIONAL (recommended): store auth info if returned
+    if (res?.token) localStorage.setItem("token", res.token);
+    if (res?.userId) localStorage.setItem("userId", res.userId);
+
+    // Redirect to onboarding
+    navigate("/onboarding", { replace: true });
+  } catch (err) {
+    setError(
+      err?.response?.data?.error ||
+      err?.message ||
+      "Registration failed"
+    );
+  } finally {
+    setLoading(false);
   }
+}
 
-  // optional: redirect to backend google oauth for signup (if you support it)
   const handleGoogleRedirect = () => {
     const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8080";
     window.location.href = `${apiBase}/auth/google`;
@@ -44,7 +48,7 @@ export default function Register() {
 
   return (
     <div className="min-h-screen flex">
-      {/* Left Panel - Branding (same as Login) */}
+     
       <div className="hidden lg:flex lg:w-1/2 bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 relative overflow-hidden">
         <div className="absolute inset-0">
           <div className="absolute top-20 left-20 w-72 h-72 bg-blue-500/10 rounded-full blur-3xl" />
@@ -107,10 +111,10 @@ export default function Register() {
         </div>
       </div>
 
-      {/* Right Panel - Register Form (styled exactly like Login card) */}
+      
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-          {/* Mobile Logo */}
+          
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
               <span className="text-white font-bold text-lg">M</span>
@@ -118,13 +122,13 @@ export default function Register() {
             <span className="text-slate-900 font-semibold text-xl">MentalSense</span>
           </div>
 
-          {/* Header */}
+          
           <div className="text-center lg:text-left mb-8">
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Create your free account</h2>
             <p className="text-slate-500">Start your MentalSense wellness journey — it's free</p>
           </div>
 
-          {/* Social Signup (matches login) */}
+        
           <div className="space-y-3 mb-6">
             <button
               type="button"
@@ -141,7 +145,7 @@ export default function Register() {
             </button>
           </div>
 
-          {/* Divider */}
+         
           <div className="relative mb-6">
             <div className="absolute inset-0 flex items-center">
               <div className="w-full border-t border-slate-200"></div>
@@ -151,7 +155,7 @@ export default function Register() {
             </div>
           </div>
 
-          {/* Register Form (layout & style match the login form exactly) */}
+          
           <form onSubmit={onSubmit} className="space-y-5">
             <div>
               <label className="block text-slate-700 mb-2 text-sm font-medium">Full name</label>
@@ -206,13 +210,13 @@ export default function Register() {
             </motion.button>
           </form>
 
-          {/* Footer */}
+        
           <p className="mt-8 text-center text-slate-500 text-sm">
             Already have an account?{" "}
             <a href="/login" className="text-blue-600 hover:text-blue-700 font-semibold">Sign in</a>
           </p>
 
-          {/* Trust Badges (same) */}
+         
           <div className="mt-8 pt-6 border-t border-slate-100/20">
             <div className="flex items-center justify-center gap-6 text-slate-400">
               <div className="flex items-center gap-2 text-xs">

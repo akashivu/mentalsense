@@ -10,7 +10,7 @@ import TrendGraph from "./components/TrendGraph";
 import Dashboard from "./pages/Dashboard";
 import Onboarding from "./pages/Onboarding";
 import AuthSuccess from "./pages/AuthSuccess";
-import Home from "./pages/Home";
+
 import WeeklyReport from "./pages/WeeklyReport";
 export default function App() {
   return (
@@ -27,8 +27,7 @@ export default function App() {
 
           <Route path="/onboarding" element={<Onboarding />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/home" element={<Home />} />
-
+          
          
           <Route path="/trend" element={<TrendContainer /> } />
           <Route path="/trend-graph" element={<TrendGraph />} />
