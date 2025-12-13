@@ -9,6 +9,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
   const [error, setError] = useState(null);
   
   useEffect(() => {
+    // Fetch 7-day daily stress when user or mode changes
     if (!userId) return;
     async function load() {
       try {
@@ -46,6 +47,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
       ? "Weekly Emotional Stress"
       : "Weekly Stress Overview";
   
+  // Provide color sets per mode for chart styling
   const getGradientColors = () => {
     if (mode === "keystroke") {
       return {
@@ -81,6 +83,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
         data: scores,
         borderColor: colors.border,
         backgroundColor: (context) => {
+          // create vertical gradient for the area under the line
           const ctx = context.chart.ctx;
           const gradient = ctx.createLinearGradient(0, 0, 0, 180);
           gradient.addColorStop(0, colors.start);
@@ -123,6 +126,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
         caretPadding: 8,
         callbacks: {
           title: (context) => context[0].label,
+          // show percentage for the y-value in tooltip
           label: (context) => `${(context.parsed.y * 100).toFixed(0)}%`,
         },
       },
@@ -141,6 +145,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
           color: "#64748b",
           font: { size: 11, weight: "500", family: "system-ui, -apple-system, sans-serif" },
           padding: 8,
+          // convert tick to percentage label
           callback: (value) => (value * 100).toFixed(0) + "%",
         },
       },

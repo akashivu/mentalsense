@@ -1,4 +1,4 @@
-// src/services/AuthService.js
+
 export function setToken(token) {
   localStorage.setItem("ms_token", token);
 }

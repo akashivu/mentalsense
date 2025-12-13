@@ -66,7 +66,7 @@ export default function WeeklyReport() {
 
   return (
     <div className="min-h-screen bg-gray-50 px-6 py-6">
-      {/* Header */}
+      
       <header className="flex items-center justify-between mb-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Weekly Report</h1>
@@ -81,7 +81,7 @@ export default function WeeklyReport() {
 
       {/* Summary Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
-        {/* Avg Score */}
+       
         <div className="bg-white rounded-2xl p-6 shadow border border-gray-200">
           <h3 className="text-sm text-gray-500">Average Stress</h3>
           <p className="text-3xl font-bold mt-2 text-gray-900">
@@ -89,7 +89,7 @@ export default function WeeklyReport() {
           </p>
         </div>
 
-        {/* Best Day */}
+       
         <div className="bg-white rounded-2xl p-6 shadow border border-gray-200">
           <h3 className="text-sm text-gray-500">Best Day</h3>
           <p className="text-xl font-bold mt-2 text-emerald-600">
@@ -97,7 +97,7 @@ export default function WeeklyReport() {
           </p>
         </div>
 
-        {/* Trend */}
+        
         <div className="bg-white rounded-2xl p-6 shadow border border-gray-200">
           <h3 className="text-sm text-gray-500">Weekly Change</h3>
 
@@ -117,7 +117,7 @@ export default function WeeklyReport() {
         </div>
       </div>
 
-      {/* Weekly Trend Graph */}
+      
       <div className="bg-white rounded-2xl p-6 shadow border border-gray-200 mb-8">
         <h3 className="text-lg font-semibold mb-3 flex items-center gap-2">
           <TrendingUp className="h-5 w-5 text-indigo-600" />
@@ -126,13 +126,13 @@ export default function WeeklyReport() {
         <WeeklyTrend days={14} mode="combined" />
       </div>
 
-      {/* Behavior Patterns (Heatmap + DOW pattern) */}
+    
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-8">
         <HourlyHeatmap userId={userId} mode="combined" />
         <DowPattern userId={userId} mode="combined" />
       </div>
 
-      {/* Insights List */}
+      
       <div className="bg-white rounded-2xl p-6 shadow border border-gray-200 mb-8">
         <h3 className="text-lg font-semibold mb-3">Insights</h3>
         <ul className="space-y-3">
@@ -147,7 +147,7 @@ export default function WeeklyReport() {
         </ul>
       </div>
 
-      {/* CTA */}
+    
       <button
         onClick={() => window.location.assign("/dashboard")}
         className="w-full py-4 rounded-xl bg-indigo-600 text-white font-semibold shadow hover:bg-indigo-700 transition-all"

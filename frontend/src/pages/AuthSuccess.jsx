@@ -1,13 +1,9 @@
-// src/pages/AuthSuccess.jsx
+
 import React, { useEffect, useState } from "react";
 import { Loader2, CheckCircle, AlertCircle } from "lucide-react";
 import { setToken } from "../services/AuthService";
 
-/**
- * AuthSuccess works with BrowserRouter (no hash).
- * Expects token in query (preferred) or hash (fallback).
- * Cleans URL to /auth/success and redirects to /dashboard.
- */
+
 export default function AuthSuccess({ redirectTo = "/dashboard", cleanRoute = "/auth/success" }) {
   const [status, setStatus] = useState("processing");
 
