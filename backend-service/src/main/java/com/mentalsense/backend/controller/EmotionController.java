@@ -11,8 +11,9 @@ import org.springframework.web.client.RestTemplate;
 import jakarta.servlet.http.HttpServletRequest;
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 
-@CrossOrigin(origins = "http://localhost:5173")
+
 @RestController
 @RequestMapping("/emotion")
 public class EmotionController {
@@ -22,11 +23,13 @@ public class EmotionController {
 
     @Autowired
     private RestTemplate restTemplate;
+    @Value("${ml.base.url}")
+    private String mlBase;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
     // Local ML model endpoint for emotion analysis
-    private final String ML_URL = "http://localhost:8000/predict/emotion_text";
+
 
     @PostMapping("/text")
     public ResponseEntity<?> analyzeText(@RequestBody Map<String, String> body, HttpServletRequest request) {
@@ -40,7 +43,13 @@ public class EmotionController {
             HttpHeaders headers = new HttpHeaders();
             headers.setContentType(MediaType.APPLICATION_JSON);
             HttpEntity<Map<String, String>> entity = new HttpEntity<>(Map.of("text", text), headers);
-            ResponseEntity<Map> mlRes = restTemplate.postForEntity(ML_URL, entity, Map.class);
+            ResponseEntity<Map> mlRes =
+                    restTemplate.postForEntity(
+                            mlBase + "/predict/emotion_text",
+                            entity,
+                            Map.class
+                    );
+
 
             // Basic validation of ML response
             if (!mlRes.getStatusCode().is2xxSuccessful()

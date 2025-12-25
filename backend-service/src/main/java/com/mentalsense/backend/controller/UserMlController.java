@@ -9,6 +9,7 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.HttpClientErrorException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 import java.util.stream.Collectors;
@@ -20,13 +21,14 @@ public class UserMlController {
 
     @Autowired
     private StressHistoryRepo historyRepo;
+    @Value("${ml.base.url}")
+    private String mlBase;
 
     @Autowired
     private RestTemplate template;
 
 
-    // Local ML service base URL (development)
-    private static final String ML_BASE = "http://localhost:8000";
+
 
 
     @GetMapping("/user/{id}/trend")
@@ -68,7 +70,9 @@ public class UserMlController {
         logger.debug("Calling ML trend for user {} with payload: {}", id, req);
 
         try {
-            ResponseEntity<Map> res = template.postForEntity(ML_BASE + "/predict/trend", req, Map.class);
+            ResponseEntity<Map> res =
+                    template.postForEntity(mlBase + "/predict/trend", req, Map.class);
+
             return ResponseEntity.ok(res.getBody());
         } catch (HttpClientErrorException.BadRequest bad) {
             // ML rejected the payload — surface ML response for easier debugging

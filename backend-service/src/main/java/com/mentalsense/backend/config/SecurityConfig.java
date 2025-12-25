@@ -26,42 +26,53 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
 
-        // Used when redirecting unauthenticated browser requests to start OAuth flow
         String oauthAuthorizeUri = "/oauth2/authorize/google";
 
         http
-                .cors(c -> c.configurationSource(request -> {
-                    // Local frontend access config
+                // ================= CORS =================
+                .cors(cors -> cors.configurationSource(request -> {
                     CorsConfiguration cfg = new CorsConfiguration();
-                    cfg.setAllowedOrigins(List.of("http://localhost:5173"));
+                    cfg.setAllowedOrigins(List.of(
+                            "http://localhost:5173",
+                            "https://mentalsense.netlify.app"
+                    ));
                     cfg.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
                     cfg.setAllowedHeaders(List.of("*"));
                     cfg.setAllowCredentials(true);
                     return cfg;
                 }))
+
+                // ================= CSRF =================
                 .csrf(csrf -> csrf.disable())
 
+                // ================= AUTHORIZATION =================
                 .authorizeHttpRequests(auth -> auth
-                        // endpoints that don't require authentication
-                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**", "/keystroke/**").permitAll()
+                        // Public endpoints
+                        .requestMatchers("/auth/**", "/oauth2/**", "/login/**").permitAll()
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
-                        // everything else goes through JWT authentication
+
+                        // Keystroke logging MUST be authenticated
+                        .requestMatchers(HttpMethod.POST, "/keystroke/log").authenticated()
+
+                        // Everything else requires JWT
                         .anyRequest().authenticated()
                 )
 
-                // OAuth flow settings for normal browser logins
-                .oauth2Login(o -> o
+                // ================= OAUTH2 LOGIN =================
+                .oauth2Login(oauth -> oauth
                         .authorizationEndpoint(a -> a.baseUri("/oauth2/authorize"))
                         .redirectionEndpoint(r -> r.baseUri("/oauth2/callback/*"))
                         .successHandler(oauth2SuccessHandler)
                 )
 
-                // Decide between returning JSON (API calls) or redirecting (browser requests)
+                // ================= AUTH ENTRY =================
                 .exceptionHandling(e -> e
-                        .authenticationEntryPoint(new ApiOrRedirectAuthenticationEntryPoint(oauthAuthorizeUri))
+                        .authenticationEntryPoint(
+                                new ApiOrRedirectAuthenticationEntryPoint(oauthAuthorizeUri)
+                        )
                 );
 
-        // Ensure JWT filter runs before Spring Security’s username/password filter
+        // ================= JWT FILTER =================
         http.addFilterBefore(jwtFilter, UsernamePasswordAuthenticationFilter.class);
 
         return http.build();

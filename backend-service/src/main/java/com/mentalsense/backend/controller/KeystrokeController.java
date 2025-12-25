@@ -12,6 +12,7 @@ import org.springframework.web.client.RestTemplate;
 
 import java.time.Instant;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Value;
 
 @RestController
 @RequestMapping("/keystroke")
@@ -25,6 +26,8 @@ public class KeystrokeController {
 
     @Autowired
     private RestTemplate restTemplate;
+    @Value("${ml.base.url}")
+    private String mlBase;
 
     @PostMapping("/log")
     public ResponseEntity<?> log(@RequestBody Map<String, Object> body, HttpServletRequest request) {
@@ -49,18 +52,21 @@ public class KeystrokeController {
 
         // Prepare ML request payload
         Map<String, Object> mlReq = Map.of(
+                "user_id", userId,
                 "event_times", body.get("event_times"),
                 "raw_text", rawText
         );
+
 
         // Call keystroke ML service (best-effort — failure is non-fatal)
         Double mlStress = null;
         try {
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(
-                    "http://localhost:8000/predict/keystroke",
+                    mlBase + "/predict/keystroke",
                     mlReq,
                     Map.class
             );
+
             Map mlBody = mlRes.getBody();
             if (mlBody != null) {
                 // The ML service may return the score under different keys

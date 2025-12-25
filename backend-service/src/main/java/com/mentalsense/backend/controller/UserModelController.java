@@ -8,22 +8,24 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.util.*;
 
 @RestController
 @RequestMapping("/user")
-@CrossOrigin(origins = "http://localhost:5173")
+
 public class UserModelController {
 
     @Autowired
     private StressHistoryRepo stressRepo;
+    @Value("${ml.base.url}")
+    private String mlBase;
 
     @Autowired
     private RestTemplate restTemplate;
 
-    // Local ML service base (developnent)
-    private final String ML_BASE = "http://localhost:8000";
+
 
 
     @PostMapping("/{userId}/train-models")
@@ -51,7 +53,8 @@ public class UserModelController {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(body, headers);
 
             // Forward training request to mL service
-            String url = ML_BASE + "/user/" + userId + "/train-models";
+            String url = mlBase + "/user/" + userId + "/train-models";
+
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
             return ResponseEntity.status(mlRes.getStatusCode()).body(mlRes.getBody());
@@ -86,7 +89,8 @@ public class UserModelController {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
             // Delegate trend prediction to per-user ML endpoint
-            String url = ML_BASE + "/user/" + userId + "/trend";
+            String url = mlBase + "/user/" + userId + "/trend";
+
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
             return ResponseEntity.status(mlRes.getStatusCode()).body(mlRes.getBody());
@@ -125,7 +129,8 @@ public class UserModelController {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
             // Call generic anomaly endpoint on ML service
-            String url = ML_BASE + "/predict/anomaly";
+            String url = mlBase + "/predict/anomaly";
+
             ResponseEntity<Map> mlRes = restTemplate.postForEntity(url, entity, Map.class);
 
             return ResponseEntity.status(mlRes.getStatusCode()).body(mlRes.getBody());

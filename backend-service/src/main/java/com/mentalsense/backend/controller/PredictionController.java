@@ -12,12 +12,13 @@ import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.client.RestClientException;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.beans.factory.annotation.Value;
 
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
 
-@CrossOrigin(origins = "http://localhost:5173")
+
 @RestController
 @RequestMapping("/predict")
 public class PredictionController {
@@ -26,12 +27,12 @@ public class PredictionController {
     @Autowired private StressHistoryRepo historyRepo;
     @Autowired private RestTemplate restTemplate;
     @Autowired private UserRepo userRepo;
+    @Value("${ml.base.url}")
+    private String mlBase;
 
     private final ObjectMapper mapper = new ObjectMapper();
 
-    // ML endpoints (local during development)
-    private final String ML_URL      = "http://localhost:8000/predict/combined";
-    private final String ML_TEXT_URL = "http://localhost:8000/predict/emotion_text";
+
 
 
     // Combined Prediction (text + keystroke)
@@ -61,7 +62,9 @@ public class PredictionController {
             HttpEntity<Map<String, Object>> entity = new HttpEntity<>(mlReq, headers);
 
             // Best-effort ML call
-            Map<String, Object> mlRes = callMl(ML_URL, entity);
+            Map<String, Object> mlRes =
+                    callMl(mlBase + "/predict/combined", entity);
+
             if (mlRes == null) return fail("ML returned null");
 
             Map<String, Object> textMetrics = castMap(mlRes.get("text_metrics"));
@@ -150,7 +153,9 @@ public class PredictionController {
             HttpEntity<Map<String, Object>> entity =
                     new HttpEntity<>(Map.of("text", rawText), createHeaders());
 
-            Map<String, Object> mlRes = callMl(ML_TEXT_URL, entity);
+            Map<String, Object> mlRes =
+                    callMl(mlBase + "/predict/emotion_text", entity);
+
             if (mlRes == null) return fail("ML returned null");
 
             Map<String, Object> result = castMap(mlRes.get("result"));
