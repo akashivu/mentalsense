@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
+import BASE from "../api/base";
+
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 
@@ -34,18 +36,19 @@ export default function InsightCard({ userId }) {
     (async () => {
       try {
         const [hourRes, dowRes, dailyRes] = await Promise.all([
-          axios.get(
-            `http://localhost:8080/user/${userId}/hourly-stress?days=7`,
-            { headers: authHeader() }
-          ),
-          axios.get(
-            `http://localhost:8080/user/${userId}/dow-stress?days=28`,
-            { headers: authHeader() }
-          ),
-          axios.get(
-            `http://localhost:8080/user/${userId}/daily-stress?days=14`,
-            { headers: authHeader() }
-          ),
+         axios.get(
+  `${BASE}/user/${userId}/hourly-stress?days=7`,
+  { headers: authHeader() }
+),
+axios.get(
+  `${BASE}/user/${userId}/dow-stress?days=28`,
+  { headers: authHeader() }
+),
+axios.get(
+  `${BASE}/user/${userId}/daily-stress?days=14`,
+  { headers: authHeader() }
+),
+
         ]);
 
         if (!mounted) return;

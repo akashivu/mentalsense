@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import useKeystrokeCapture from "../hooks/useKeystrokeCapture";
 import { authHeader } from "../services/AuthService";
 import axios from "axios";
+import BASE from "../api/base";
 
 export default function TypingBox({ userId = 1 }) {
   const [text, setText] = useState("");
@@ -44,10 +45,11 @@ export default function TypingBox({ userId = 1 }) {
         const avgStress = arr.reduce((s, f) => s + (f.backspaceRate || 0), 0) / arr.length;
         
         const tokenHeader = authHeader();
-        axios.put(`http://localhost:8080/user/${userId}/baseline`, {
-          baselineTypingSpeed: avgTypingSpeed,
-          baselineStress: avgStress
-        }, { headers: { ...tokenHeader, "Content-Type": "application/json" }});
+        axios.put(`${BASE}/user/${userId}/baseline`, {
+  baselineTypingSpeed: avgTypingSpeed,
+  baselineStress: avgStress
+}, { headers: { ...tokenHeader, "Content-Type": "application/json" }});
+
         return [];
       } else return arr;
     });

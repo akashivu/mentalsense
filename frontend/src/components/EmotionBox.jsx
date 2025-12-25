@@ -2,6 +2,8 @@ import React, { useState, useRef } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
 import { MessageSquare, Activity, Send, X, Sparkles } from "lucide-react";
+import BASE from "../api/base";
+
 
 export default function EmotionBox({ onNewPrediction }) {
   const [text, setText] = useState("");
@@ -62,7 +64,8 @@ export default function EmotionBox({ onNewPrediction }) {
       const endpoint = hasKeystrokes
         ? "/predict/combined"
         : "/predict/emotion_text";
-      const url = `http://localhost:8080${endpoint}`;
+     const url = `${BASE}${endpoint}`;
+
 
       const payload = { raw_text: text };
       if (hasKeystrokes) payload.event_times = rawEvents;

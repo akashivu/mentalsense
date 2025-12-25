@@ -95,7 +95,8 @@ const onSubmit = async (e) => {
   // Helper redirect to backend google oauth. Backend should handle redirect & callback.
 const handleGoogleRedirect = () => {
   
-  const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8080";
+  const apiBase = import.meta.env.VITE_API_BASE_URL;
+
 
   console.log("[Login] Redirecting to Google OAuth:", apiBase + "/oauth2/authorize/google");
 

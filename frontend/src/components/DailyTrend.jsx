@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Line } from "react-chartjs-2";
 import { authHeader } from "../services/AuthService";
+import BASE from "../api/base";
+
 
 export default function DailyTrend({ userId, mode = "combined" }) {
   const [data, setData] = useState([]);
@@ -14,10 +16,11 @@ export default function DailyTrend({ userId, mode = "combined" }) {
     async function load() {
       try {
         setLoading(true);
-        const res = await axios.get(
-          `http://localhost:8080/user/${userId}/daily-stress?days=7&mode=${mode}`,
-          { headers: authHeader() }
-        );
+       const res = await axios.get(
+  `${BASE}/user/${userId}/daily-stress?days=7&mode=${mode}`,
+  { headers: authHeader() }
+);
+
         setData(res.data || []);
         setError(null);
       } catch (err) {

@@ -1,6 +1,8 @@
 import React, { useEffect, useState } from "react";
 import TrendGraph from "./TrendGraph";
 import { fetchTrendForUser, checkAnomaly } from "../api/ml";
+import BASE from "../api/base";
+
 
 export default function TrendContainer({ userId = 1 }) {
   const [past, setPast] = useState([]);
@@ -15,7 +17,8 @@ export default function TrendContainer({ userId = 1 }) {
     async function load() {
       console.log("fetching trend for userId:", userId);
       try {
-        const res = await fetch(`http://localhost:8080/user/${userId}/trend`);
+        const res = await fetch(`${BASE}/user/${userId}/trend`);
+
         if (!res.ok) {
           const err = await res.json();
 

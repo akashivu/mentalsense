@@ -13,6 +13,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { authHeader } from "../services/AuthService";
 import { BarChart3, Maximize2, X } from "lucide-react";
+import BASE from "../api/base";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip, Legend, TimeScale);
 
@@ -52,9 +53,10 @@ export default function WeeklyTrend({
     (async function fetchData() {
       try {
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/daily_stress?days=${days}&mode=${mode}`,
-          { headers: authHeader() }
-        );
+  `${BASE}/user/${userId}/daily_stress?days=${days}&mode=${mode}`,
+  { headers: authHeader() }
+);
+
         if (!mounted) return;
 
         const normalized = (res.data || []).map((d) => ({

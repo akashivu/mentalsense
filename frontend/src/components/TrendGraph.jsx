@@ -1,4 +1,3 @@
-
 import React from "react";
 import { Line } from "react-chartjs-2";
 import { TrendingUp, Activity } from "lucide-react";
@@ -9,7 +8,7 @@ export default function TrendGraph({
   future = [],
   anomalies = [],
   mode = "combined",
-  loading = false, // pass true while fetching
+  loading = false,
 }) {
   const pastArr = Array.isArray(past) ? past : [];
   const futureArr = Array.isArray(future) ? future : [];
@@ -29,28 +28,35 @@ export default function TrendGraph({
       a.score ?? a.combinedScore ?? trendValues[idx] ?? null;
   });
 
+  // Human-friendly titles
+  const titleText =
+    mode === "keystroke"
+      ? "Typing Stress Trend"
+      : mode === "emotion"
+      ? "Emotion Stress Trend"
+      : "Overall Stress Trend";
+
+  const subtitleText =
+    mode === "keystroke"
+      ? "Based on changes in your typing rhythm"
+      : mode === "emotion"
+      ? "Based on emotional tone in your writing"
+      : "Combined view of behavioral signals";
+
   const baseLabel =
     mode === "keystroke"
-      ? "Keystroke Stress Trend"
+      ? "Typing Stress"
       : mode === "emotion"
-      ? "Emotion Text Stress Trend"
-      : "Overall Stress Trend";
+      ? "Emotion Stress"
+      : "Overall Stress";
 
   const anomalyLabel =
     mode === "keystroke"
-      ? "Keystroke Anomalies"
+      ? "Unusual typing patterns"
       : mode === "emotion"
-      ? "Emotion Anomalies"
-      : "Stress Anomalies";
+      ? "Unusual emotional signals"
+      : "Unusual stress patterns";
 
-  const titleText =
-    mode === "keystroke"
-      ? "Predicted Keystroke Stress Trend"
-      : mode === "emotion"
-      ? "Predicted Emotion Text Stress Trend"
-      : "Predicted Overall Stress Trend";
-
-  
   const lineGray = "#6B7280";
   const fillGray = "rgba(107,114,128,0.06)";
 
@@ -94,7 +100,6 @@ export default function TrendGraph({
         borderWidth: 1,
         titleColor: "#0f172a",
         bodyColor: "#475569",
-        displayColors: true,
       },
     },
     scales: {
@@ -116,7 +121,8 @@ export default function TrendGraph({
 
   return (
     <SkeletonCard loading={loading} heightClass="h-36">
-      <div className="bg-white rounded-2xl shadow-md border border-gray-200 px-5 py-5 h-60 md:h-64 flex flex-col transition-all duration-300 hover:shadow-lg hover:border-gray-300 group">
+      <div className="bg-white rounded-2xl shadow-md border border-gray-200 px-5 py-5 h-60 md:h-64 flex flex-col transition-all duration-300 hover:shadow-lg hover:border-gray-300">
+        {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
@@ -124,20 +130,43 @@ export default function TrendGraph({
             </div>
             <div>
               <h2 className="text-sm font-bold text-gray-900">{titleText}</h2>
-              <p className="text-xs text-gray-500 font-medium">Historical & forecasted data</p>
+              <p className="text-xs text-gray-500 font-medium">
+                {subtitleText}
+              </p>
             </div>
           </div>
-          <span className={`px-3 py-1 rounded-full text-xs font-semibold ${mode === "keystroke" ? "bg-indigo-100 text-indigo-700" : mode === "emotion" ? "bg-purple-100 text-purple-700" : "bg-blue-100 text-blue-700"}`}>
-            {mode === "keystroke" ? "Keystroke" : mode === "emotion" ? "Emotion" : "Combined"}
+
+          <span
+            className={`px-3 py-1 rounded-full text-xs font-semibold ${
+              mode === "keystroke"
+                ? "bg-indigo-100 text-indigo-700"
+                : mode === "emotion"
+                ? "bg-purple-100 text-purple-700"
+                : "bg-blue-100 text-blue-700"
+            }`}
+          >
+            {mode === "keystroke"
+              ? "Keystroke"
+              : mode === "emotion"
+              ? "Emotion"
+              : "Combined"}
           </span>
         </div>
 
+        {/* Empty State */}
         {trendValues.length === 0 ? (
           <div className="flex-1 flex items-center justify-center">
-            <div className="text-center">
-              <Activity className="h-10 w-10 text-gray-300 mx-auto mb-2" strokeWidth={1.5} />
-              <p className="text-sm font-medium text-gray-500">Need more data to compute trend</p>
-              <p className="text-xs text-gray-400 mt-1">Keep using the app to see predictions</p>
+            <div className="text-center max-w-xs">
+              <Activity
+                className="h-10 w-10 text-gray-300 mx-auto mb-2"
+                strokeWidth={1.5}
+              />
+              <p className="text-sm font-medium text-gray-500">
+                We’re still learning your patterns
+              </p>
+              <p className="text-xs text-gray-400 mt-1 leading-relaxed">
+                Try typing regularly — trends will appear as MentalSense gathers more signals.
+              </p>
             </div>
           </div>
         ) : (

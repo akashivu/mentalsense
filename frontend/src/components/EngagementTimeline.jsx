@@ -5,6 +5,8 @@ import { Line } from "react-chartjs-2";
 import { authHeader } from "../services/AuthService";
 import { Activity } from "lucide-react";
 import SkeletonCard from "./SkeletonCard";
+import BASE from "../api/base";
+
 
 export default function EngagementTimeline({ userId, days = 30 }) {
   const [points, setPoints] = useState(null);
@@ -24,9 +26,10 @@ export default function EngagementTimeline({ userId, days = 30 }) {
     (async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/engagement?days=${days}`,
-          { headers: authHeader() }
-        );
+  `${BASE}/user/${userId}/engagement?days=${days}`,
+  { headers: authHeader() }
+);
+
 
         if (!mounted) return;
 

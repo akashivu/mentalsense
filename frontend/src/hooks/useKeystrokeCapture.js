@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
+import BASE from "../api/base";
 
 export default function useKeystrokeCapture() {
   const startTimeRef = useRef(null);
@@ -62,19 +63,19 @@ export default function useKeystrokeCapture() {
   const sendToServer = useCallback(async (features, userId) => {
     try {
      
-      await axios.post(
-        "http://localhost:8080/keystroke/log",
-        {
-          event_times: features.event_times,
-          raw_text: features.raw_text,
-          typingSpeed: features.typingSpeed,
-          avgKeyHold: features.avgHold,
-          backspaceRate: features.backspaceRate
-        },
-        {
-          headers: { "Content-Type": "application/json", ...authHeader() }
-        }
-      );
+     await axios.post(
+  `${BASE}/keystroke/log`,
+  {
+    event_times: features.event_times,
+    raw_text: features.raw_text,
+    typingSpeed: features.typingSpeed,
+    avgKeyHold: features.avgHold,
+    backspaceRate: features.backspaceRate
+  },
+  {
+    headers: { "Content-Type": "application/json", ...authHeader() }
+  }
+);
 
      
       const anomalyPayload = {
@@ -85,13 +86,14 @@ export default function useKeystrokeCapture() {
         ]
       };
 
-      const anomalyRes = await axios.post(
-        `http://localhost:8080/user/${userId}/anomaly`,
-        anomalyPayload,
-        {
-          headers: { "Content-Type": "application/json", ...authHeader() }
-        }
-      );
+     const anomalyRes = await axios.post(
+  `${BASE}/user/${userId}/anomaly`,
+  anomalyPayload,
+  {
+    headers: { "Content-Type": "application/json", ...authHeader() }
+  }
+);
+
 
       console.log("Anomaly result:", anomalyRes.data);
 

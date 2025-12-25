@@ -15,6 +15,7 @@ import {
 import "chartjs-adapter-date-fns";
 import { authHeader } from "../services/AuthService";
 import { Activity, TrendingUp } from "lucide-react";
+import BASE from "../api/base";
 
 ChartJS.register(
   TimeScale,
@@ -64,9 +65,10 @@ export default function EmotionGraph({
     (async function fetchData() {
       try {
         const res = await axios.get(
-          `http://localhost:8080/user/${userId}/predictions/recent?limit=${limit}`,
-          { headers: authHeader() }
-        );
+  `${BASE}/user/${userId}/predictions/recent?limit=${limit}`,
+  { headers: authHeader() }
+);
+
 
         if (!mounted) return;
 

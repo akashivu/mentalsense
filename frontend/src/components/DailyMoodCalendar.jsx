@@ -2,6 +2,8 @@ import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
 import { Calendar } from "lucide-react";
+import BASE from "../api/base";
+
 
 export default function DailyMoodCalendar({
   userId,
@@ -17,10 +19,11 @@ export default function DailyMoodCalendar({
 
     async function load() {
       try {
-        const res = await axios.get(
-          `http://localhost:8080/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
-          { headers: authHeader() }
-        );
+       const res = await axios.get(
+  `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
+  { headers: authHeader() }
+);
+
         setData(res.data || []);
       } catch (err) {
         console.error("DailyMoodCalendar error:", err);

@@ -152,7 +152,11 @@ export default function Onboarding() {
               </div>
             </div>
 
-            <motion.button onClick={() => window.location.assign("/dashboard")} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-gray-800 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2" aria-label="Go to dashboard">
+           <motion.button
+  onClick={() => {
+    localStorage.setItem("mentalsense_onboarded", "true");
+    window.location.assign("/dashboard");
+  }} whileHover={{ scale: 1.01 }} whileTap={{ scale: 0.99 }} className="w-full bg-gradient-to-r from-emerald-500 to-green-500 hover:from-emerald-600 hover:to-green-600 text-gray-800 py-3.5 rounded-xl font-semibold shadow-lg shadow-emerald-500/25 transition-all flex items-center justify-center gap-2" aria-label="Go to dashboard">
               Go to Dashboard
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3"/></svg>
             </motion.button>
