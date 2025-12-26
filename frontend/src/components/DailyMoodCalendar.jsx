@@ -24,7 +24,14 @@ export default function DailyMoodCalendar({
   { headers: authHeader() }
 );
 
-        setData(res.data || []);
+        const rows = Array.isArray(res.data)
+  ? res.data
+  : Array.isArray(res.data?.data)
+  ? res.data.data
+  : [];
+
+setData(rows);
+
       } catch (err) {
         console.error("DailyMoodCalendar error:", err);
       } finally {
@@ -37,9 +44,11 @@ export default function DailyMoodCalendar({
 
   // Convert API array into a quick lookup map for ISO date → score
   const stressByDay = new Map();
-  data.forEach((d) => {
-    stressByDay.set(d.day, d.avgStress);
-  });
+(Array.isArray(data) ? data : []).forEach((d) => {
+  if (!d?.day) return;
+  stressByDay.set(d.day, d.avgStress ?? null);
+});
+
 
   // Build the last N calendar days so the UI stays consistent even with gaps
   const daysArray = [];
