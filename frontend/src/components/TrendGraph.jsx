@@ -20,10 +20,12 @@ export default function TrendGraph({
     ...pastArr.map((_, idx) => `P-${pastArr.length - idx}`),
     ...futureArr.map((_, idx) => `+${idx + 1}`),
   ];
+const anomaliesArr = Array.isArray(anomalies) ? anomalies : [];
 
   const anomalyScores = new Array(totalLength).fill(null);
 
-  anomalies.slice(0, totalLength).forEach((a, idx) => {
+  anomaliesArr.slice(0, totalLength).forEach((a, idx) => {
+
     anomalyScores[idx] =
       a.score ?? a.combinedScore ?? trendValues[idx] ?? null;
   });

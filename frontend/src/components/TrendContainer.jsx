@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from "react";
 import TrendGraph from "./TrendGraph";
-import { fetchTrendForUser, checkAnomaly } from "../api/ml";
-import BASE from "../api/base";
+import { checkAnomaly, fetchTrendForUser } from "../api/ml";
+
 
 
 export default function TrendContainer({ userId = 1 }) {
@@ -17,27 +17,12 @@ export default function TrendContainer({ userId = 1 }) {
     async function load() {
       console.log("fetching trend for userId:", userId);
       try {
-        const res = await fetch(`${BASE}/user/${userId}/trend`);
+       const data = await fetchTrendForUser(userId);
 
-        if (!res.ok) {
-          const err = await res.json();
+setPast(Array.isArray(data.past) ? data.past : []);
+setFuture(Array.isArray(data.future) ? data.future : []);
+setMessage(null);
 
-          if (err.error && err.error.includes("Not enough data")) {
-            setPast([]);
-            setFuture([]);
-            setAnomaly(null);
-            setMessage(
-              `Need ${err.required} samples. You have ${err.found}. Keep typing!`
-            );
-          } else {
-            throw err;
-          }
-          return;
-        }
-        const data = await res.json();
-        setPast(data.past || []);
-        setFuture(data.future || []);
-        setMessage(null);
       } catch (e) {
         console.error("trend fetch error:", e);
         setMessage("Unable to fetch trend right now.");

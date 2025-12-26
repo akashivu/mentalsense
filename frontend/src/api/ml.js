@@ -1,6 +1,5 @@
 const BASE = import.meta.env.VITE_API_BASE;
 
-
 function getToken() {
   return localStorage.getItem("ms_token");
 }
@@ -17,7 +16,13 @@ export async function fetchTrendForUser(userId) {
   });
 
   if (!res.ok) throw new Error(`trend fetch ${res.status}`);
-  return res.json();
+
+  const data = await res.json();
+
+  return {
+    past: Array.isArray(data?.past) ? data.past : [],
+    future: Array.isArray(data?.future) ? data.future : [],
+  };
 }
 
 export async function checkAnomaly(userId, value) {
