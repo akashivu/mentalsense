@@ -218,7 +218,20 @@ export default function Dashboard() {
 });
 
 
-      const values = histRes.data.map((item) => item.stressScore);
+     const rows = Array.isArray(histRes.data)
+  ? histRes.data
+  : Array.isArray(histRes.data?.data)
+  ? histRes.data.data
+  : Array.isArray(histRes.data?.history)
+  ? histRes.data.history
+  : [];
+
+const values = rows
+  .map((item) => item.stressScore)
+  .filter((v) => typeof v === "number");
+
+if (values.length === 0) return;
+
       if (!values || values.length === 0) return;
 
       const res = await axios.post(
