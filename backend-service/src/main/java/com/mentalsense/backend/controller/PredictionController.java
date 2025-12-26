@@ -78,7 +78,13 @@ public class PredictionController {
             }
 
             Double keystrokeScore = getDouble(mlRes.get("keystroke_score"));
-            Double combinedScore  = getDouble(mlRes.get("combined_stress_score"));
+            Double combinedScore =
+                    getDouble(mlRes.get("combined_score"));
+
+            if (combinedScore == null) {
+                combinedScore = getDouble(mlRes.get("combined_stress_score"));
+            }
+
 
             if (combinedScore == null) {
                 return fail("ML did not return combined_stress_score");
@@ -269,7 +275,10 @@ public class PredictionController {
             if (res.getStatusCode().is2xxSuccessful()) {
                 return res.getBody();
             }
-        } catch (RestClientException ignored) {}
+        } catch (RestClientException e) {
+            throw new RuntimeException("ML call failed: " + e.getMessage(), e);
+        }
+
         return null;
     }
 
