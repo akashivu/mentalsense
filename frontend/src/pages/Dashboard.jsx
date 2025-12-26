@@ -206,51 +206,11 @@ export default function Dashboard() {
 
     setPredictions((prev) => [p, ...prev].slice(0, 12));
 
-    fetchTrend();
+    
   };
 
-  async function fetchTrend() {
-    try {
-      if (!userId) return;
-
-      const histRes = await axios.get(`${BASE}/history/${userId}`, {
-  headers: authHeader(),
-});
-
-
-     const rows = Array.isArray(histRes.data)
-  ? histRes.data
-  : Array.isArray(histRes.data?.data)
-  ? histRes.data.data
-  : Array.isArray(histRes.data?.history)
-  ? histRes.data.history
-  : [];
-
-const values = rows
-  .map((item) => item.stressScore)
-  .filter((v) => typeof v === "number");
-
-if (values.length === 0) return;
-
-      if (!values || values.length === 0) return;
-
-      const res = await axios.post(
-  `${BASE}/user/${userId}/trend`,
-  { past_values: values },
-  { headers: authHeader() }
-);
-
-
-      setPast(res.data.past || []);
-      setFuture(res.data.future || []);
-    } catch (err) {
-      console.error("Trend fetch error:", err);
-    }
-  }
-
-  useEffect(() => {
-    if (userId) fetchTrend();
-  }, [userId]);
+  
+  
 
   useEffect(() => {
     if (!userId) return;
