@@ -53,19 +53,31 @@ export default function WeeklyTrend({
     (async function fetchData() {
       try {
         const res = await axios.get(
-  `${BASE}/user/${userId}/daily_stress?days=${days}&mode=${mode}`,
+  `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`
+,
   { headers: authHeader() }
 );
 
         if (!mounted) return;
+const raw =
+  Array.isArray(res.data)
+    ? res.data
+    : Array.isArray(res.data?.data)
+    ? res.data.data
+    : Array.isArray(res.data?.items)
+    ? res.data.items
+    : [];
 
-        const normalized = (res.data || []).map((d) => ({
-          date: d.date ?? d.day ?? d.ts,
-          avg: Math.max(
-            0,
-            Math.min(1, d.avg ?? d.average ?? d.daily_average ?? 0)
-          ),
-        }));
+const normalized = raw.map((d) => ({
+  date: d.date ?? d.day ?? d.ts,
+  avg: Math.max(
+    0,
+    Math.min(1, d.avg ?? d.average ?? d.daily_average ?? 0)
+  ),
+}));
+
+setDataPoints(normalized);
+
         setDataPoints(normalized);
       } catch (err) {
         console.error("Failed to load daily stress", err);
