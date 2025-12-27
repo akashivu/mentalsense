@@ -1,52 +1,60 @@
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import { Line } from "react-chartjs-2";
+import { TrendingUp } from "lucide-react";
 import { authHeader } from "../services/AuthService";
 import BASE from "../api/base";
+import { isDemoMode } from "../hooks/useDemo";
+import { DEMO_DAILY_TREND } from "../demo/demoData";
 
 export default function DailyTrend({ userId, mode = "combined" }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const demo = isDemoMode();
 
-  useEffect(() => {
-    if (!userId) return;
+ useEffect(() => {
+  //  DEMO MODE
+  if (demo) {
+    setData(DEMO_DAILY_TREND);
+    setLoading(false);
+    setError(null);
+    return;
+  }
 
-    async function load() {
-      try {
-        setLoading(true);
+  // real user only
+  if (!userId) {
+    setLoading(false);
+    return;
+  }
 
-        const res = await axios.get(
-          `${BASE}/user/${userId}/daily-stress?days=7&mode=${mode}`,
-          { headers: authHeader() }
-        );
+  async function load() {
+    try {
+      setLoading(true);
 
-        // ✅ HARD SAFETY
-        const safeData = Array.isArray(res.data) ? res.data : [];
-        setData(safeData);
-        setError(null);
-      } catch (err) {
-        console.error("Failed to load daily stress:", err);
-        setError("Failed to load trend");
-        setData([]);
-      } finally {
-        setLoading(false);
-      }
+      const res = await axios.get(
+        `${BASE}/user/${userId}/daily-stress?days=7&mode=${mode}`,
+        { headers: authHeader() }
+      );
+
+      const safeData = Array.isArray(res.data) ? res.data : [];
+      setData(safeData);
+      setError(null);
+    } catch (err) {
+      console.error("Failed to load daily stress:", err);
+      setError("Failed to load trend");
+      setData([]);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    load();
-  }, [userId, mode]);
+  load();
+}, [userId, mode, demo]);
 
-  // ✅ SAFE MAPS
-  const labels = Array.isArray(data) ? data.map((d) => d.day) : [];
-  const scores = Array.isArray(data) ? data.map((d) => d.avgStress) : [];
 
-  const datasetLabel =
-    mode === "keystroke"
-      ? "7-Day Keystroke Stress Trend"
-      : mode === "emotion"
-      ? "7-Day Emotion Text Stress Trend"
-      : "7-Day Overall Stress Trend";
+  const labels = data.map((d) => d.day);
+  const scores = data.map((d) => d.avgStress);
 
   const titleText =
     mode === "keystroke"
@@ -55,27 +63,26 @@ export default function DailyTrend({ userId, mode = "combined" }) {
       ? "Weekly Emotional Stress"
       : "Weekly Stress Overview";
 
+  const subtitleText = "Last 7 days trend";
+
   const getGradientColors = () => {
     if (mode === "keystroke") {
       return {
         start: "rgba(14, 165, 233, 0.4)",
-        end: "rgba(14, 165, 233, 0.02)",
+        end: "rgba(14, 165, 233, 0.05)",
         border: "rgb(14, 165, 233)",
-        point: "rgb(14, 165, 233)",
       };
     } else if (mode === "emotion") {
       return {
         start: "rgba(168, 85, 247, 0.4)",
-        end: "rgba(168, 85, 247, 0.02)",
+        end: "rgba(168, 85, 247, 0.05)",
         border: "rgb(168, 85, 247)",
-        point: "rgb(168, 85, 247)",
       };
     } else {
       return {
-        start: "rgba(6, 182, 212, 0.55)",
-        end: "rgba(134, 239, 172, 0.12)",
-        border: "rgb(20, 184, 166)",
-        point: "rgb(20, 184, 166)",
+        start: "rgba(99, 102, 241, 0.45)",
+        end: "rgba(99, 102, 241, 0.06)",
+        border: "rgb(99, 102, 241)",
       };
     }
   };
@@ -86,26 +93,20 @@ export default function DailyTrend({ userId, mode = "combined" }) {
     labels,
     datasets: [
       {
-        label: datasetLabel,
         data: scores,
         borderColor: colors.border,
-        backgroundColor: (context) => {
-          const ctx = context.chart.ctx;
-          const gradient = ctx.createLinearGradient(0, 0, 0, 180);
-          gradient.addColorStop(0, colors.start);
-          gradient.addColorStop(1, colors.end);
-          return gradient;
+        backgroundColor: (ctx) => {
+          const g = ctx.chart.ctx.createLinearGradient(0, 0, 0, 180);
+          g.addColorStop(0, colors.start);
+          g.addColorStop(1, colors.end);
+          return g;
         },
         borderWidth: 2,
         tension: 0.42,
         pointRadius: 4,
-        pointHoverRadius: 6,
-        pointBackgroundColor: colors.point,
-        pointBorderColor: "#ffffff",
+        pointBackgroundColor: colors.border,
+        pointBorderColor: "#fff",
         pointBorderWidth: 2,
-        pointHoverBackgroundColor: colors.point,
-        pointHoverBorderColor: "#ffffff",
-        pointHoverBorderWidth: 3,
         fill: true,
       },
     ],
@@ -117,17 +118,14 @@ export default function DailyTrend({ userId, mode = "combined" }) {
     plugins: {
       legend: { display: false },
       tooltip: {
-        enabled: true,
-        backgroundColor: "rgba(255, 255, 255, 0.98)",
-        padding: 10,
-        borderColor: "rgba(226, 232, 240, 1)",
+        backgroundColor: "rgba(255,255,255,0.98)",
+        borderColor: "rgba(226,232,240,1)",
         borderWidth: 1,
         titleColor: "#0f172a",
         bodyColor: "#475569",
         displayColors: false,
         callbacks: {
-          title: (context) => context[0].label,
-          label: (context) => `${(context.parsed.y * 100).toFixed(0)}%`,
+          label: (ctx) => `${(ctx.parsed.y * 100).toFixed(0)}%`,
         },
       },
     },
@@ -136,7 +134,7 @@ export default function DailyTrend({ userId, mode = "combined" }) {
         beginAtZero: true,
         suggestedMax: 1,
         ticks: {
-          callback: (value) => `${(value * 100).toFixed(0)}%`,
+          callback: (v) => `${(v * 100).toFixed(0)}%`,
         },
       },
     },
@@ -144,25 +142,46 @@ export default function DailyTrend({ userId, mode = "combined" }) {
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-slate-100 px-3 py-3 h-52 md:h-56 flex flex-col">
-      <h2 className="text-sm font-semibold mb-1.5 text-slate-900">
-        {titleText}
-      </h2>
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-md p-4 h-56 flex flex-col transition-all hover:shadow-lg">
 
-      {loading && <p className="text-xs text-gray-500">Loading trend...</p>}
+      {/* HEADER */}
+      <div className="flex items-center gap-3 mb-3">
+        <div className="h-9 w-9 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center shadow-md">
+          <TrendingUp className="h-4 w-4 text-white" strokeWidth={2.5} />
+        </div>
+        <div>
+          <h3 className="text-sm font-bold text-gray-900">{titleText}</h3>
+          <p className="text-xs text-gray-500 font-medium">{subtitleText}</p>
+        </div>
+      </div>
 
-      {error && !loading && (
-        <p className="text-xs text-red-500">{error}</p>
-      )}
-
-      {!loading && !error && data.length === 0 && (
-        <p className="text-xs text-gray-500">
-          Not enough data yet. Use the app for a few days to see your weekly trend.
+      {/* CONTENT */}
+      {loading && (
+        <p className="text-xs text-gray-500 text-center mt-6">
+          Loading trend…
         </p>
       )}
 
+      {error && !loading && (
+        <p className="text-xs text-red-500 text-center mt-6">
+          {error}
+        </p>
+      )}
+
+      {!loading && !error && data.length === 0 && (
+        <div className="flex-1 flex flex-col items-center justify-center text-center">
+          <TrendingUp className="h-8 w-8 text-gray-300 mb-2" />
+          <p className="text-sm font-medium text-gray-600">
+            No data yet
+          </p>
+          <p className="text-xs text-gray-400 mt-1">
+            Use the app regularly to unlock trends
+          </p>
+        </div>
+      )}
+
       {!loading && !error && data.length > 0 && (
-        <div className="w-full flex-1">
+        <div className="flex-1">
           <Line data={chartData} options={chartOptions} />
         </div>
       )}

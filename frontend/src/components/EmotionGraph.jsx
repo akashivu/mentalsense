@@ -16,6 +16,8 @@ import "chartjs-adapter-date-fns";
 import { authHeader } from "../services/AuthService";
 import { Activity, TrendingUp } from "lucide-react";
 import BASE from "../api/base";
+import { isDemoMode } from "../hooks/useDemo";
+import { DEMO_PREDICTIONS } from "../demo/demoData";
 
 ChartJS.register(
   TimeScale,
@@ -37,26 +39,47 @@ export default function EmotionGraph({
   const [past, setPast] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const demo = isDemoMode();
 
-  useEffect(() => {
-    if (Array.isArray(data)) {
-      const items = data
-        .map((p) => ({
-          ts: p.ts ?? p.createdAt ?? p.created_at ?? null,
-          combined_score: p.combined_score ?? p.combinedScore ?? p.combined ?? 0,
-          keystroke_score: p.keystroke_score ?? p.keystrokeScore ?? null,
-          text_score: p.text_score ?? p.textScore ?? p.emotion_score ?? null,
-        }))
-        .sort((a, b) => new Date(a.ts || 0) - new Date(b.ts || 0));
+useEffect(() => {
+ 
+  if (demo) {
+    const items = DEMO_PREDICTIONS
+      .map((p) => ({
+        ts: p.ts,
+        combined_score: p.combined_score,
+        keystroke_score: p.keystroke_score,
+        text_score: p.text_score,
+      }))
+      .sort((a, b) => new Date(a.ts) - new Date(b.ts));
 
-      setPast(items);
-      return;
-    }
+    setPast(items);
+    setLoading(false);
+    setError(null);
+    return;
+  }
 
-    if (!userId) {
-      setPast([]);
-      return;
-    }
+  
+  if (Array.isArray(data)) {
+    const items = data
+      .map((p) => ({
+        ts: p.ts ?? p.createdAt ?? p.created_at ?? null,
+        combined_score: p.combined_score ?? p.combinedScore ?? p.combined ?? 0,
+        keystroke_score: p.keystroke_score ?? p.keystrokeScore ?? null,
+        text_score: p.text_score ?? p.textScore ?? p.emotion_score ?? null,
+      }))
+      .sort((a, b) => new Date(a.ts || 0) - new Date(b.ts || 0));
+
+    setPast(items);
+    return;
+  }
+
+  //  No user
+  if (!userId) {
+    setPast([]);
+    return;
+  }
+
 
     let mounted = true;
     setLoading(true);
@@ -93,9 +116,10 @@ export default function EmotionGraph({
     return () => {
       mounted = false;
     };
-  }, [userId, data, limit]);
+  }, [userId, data, limit, demo, mode]);
 
-  // Score selection logic untouched
+
+  
   const getScoreForMode = (p) => {
     if (mode === "keystroke") {
       return Math.max(0, Math.min(1, Number(p.keystroke_score ?? p.combined_score ?? 0)));
@@ -139,12 +163,12 @@ export default function EmotionGraph({
       ? "Emotion Stress History"
       : "Recent Stress Timeline";
 
-  //  Smooth modern Apple-style curve 
+  
   const baseDataset = {
     label: datasetLabel,
     data: chartPoints,
     borderWidth: 3,
-    tension: 0.65, // <-- Smooth curve always
+    tension: 0.65,
     borderColor: strokeColor,
     backgroundColor: fillColor,
     fill: true,

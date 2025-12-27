@@ -53,30 +53,28 @@ export default function WeeklyTrend({
     (async function fetchData() {
       try {
         const res = await axios.get(
-  `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`
-,
-  { headers: authHeader() }
-);
+          `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
+          { headers: authHeader() }
+        );
 
         if (!mounted) return;
-const raw =
-  Array.isArray(res.data)
-    ? res.data
-    : Array.isArray(res.data?.data)
-    ? res.data.data
-    : Array.isArray(res.data?.items)
-    ? res.data.items
-    : [];
 
-const normalized = raw.map((d) => ({
-  date: d.date ?? d.day ?? d.ts,
-  avg: Math.max(
-    0,
-    Math.min(1, d.avg ?? d.average ?? d.daily_average ?? 0)
-  ),
-}));
+        const raw =
+          Array.isArray(res.data)
+            ? res.data
+            : Array.isArray(res.data?.data)
+            ? res.data.data
+            : Array.isArray(res.data?.items)
+            ? res.data.items
+            : [];
 
-setDataPoints(normalized);
+        const normalized = raw.map((d) => ({
+          date: d.date ?? d.day ?? d.ts,
+          avg: Math.max(
+            0,
+            Math.min(1, d.avg ?? d.average ?? d.daily_average ?? 0)
+          ),
+        }));
 
         setDataPoints(normalized);
       } catch (err) {
@@ -110,7 +108,7 @@ setDataPoints(normalized);
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[200px] flex flex-col hover:shadow-xl transition-all duration-300">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[400px] flex flex-col hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg`}>
@@ -135,7 +133,7 @@ setDataPoints(normalized);
 
   if (!dataPoints || dataPoints.length === 0) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[200px] flex flex-col hover:shadow-xl transition-all duration-300">
+      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[400px] flex flex-col hover:shadow-xl transition-all duration-300">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg`}>
@@ -234,7 +232,7 @@ setDataPoints(normalized);
   };
 
   const ChartContent = () => (
-    <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[200px] flex flex-col hover:shadow-xl transition-all duration-300 relative group">
+    <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[400px] flex flex-col hover:shadow-xl transition-all duration-300 relative group">
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-2">
           <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg transition-transform duration-300 group-hover:scale-110`}>
@@ -261,7 +259,7 @@ setDataPoints(normalized);
         </button>
       </div>
 
-      <div className="flex-1 min-h-[120px]">
+      <div className="flex-1 min-h-0">
         <Bar data={chartData} options={options} />
       </div>
 
@@ -281,13 +279,11 @@ setDataPoints(normalized);
   if (isExpanded) {
     return (
       <>
-     
         <div 
           className="fixed inset-0 bg-black/50 backdrop-blur-sm z-40 animate-in fade-in duration-200"
           onClick={() => setIsExpanded(false)}
         />
         
-        {/* Expanded Modal */}
         <div className="fixed inset-4 md:inset-8 z-50 animate-in zoom-in-95 duration-200">
           <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/60 px-6 py-6 h-full flex flex-col">
             <div className="flex items-center justify-between mb-6">

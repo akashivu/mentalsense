@@ -10,13 +10,13 @@ export default function EmotionBox({ onNewPrediction }) {
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState(null);
 
-  // Keep keystroke timestamps and keydown map here (collected but lightweight)
+ 
   const eventTimesRef = useRef([]);
   const keyDownMapRef = useRef({});
 
   const nowMs = () => new Date().getTime();
 
-  // Record keydown timestamps — we only track characters, backspace, enter, tab
+  
   const handleKeyDown = (e) => {
     const k = e.key;
     if (k.length === 1 || k === "Backspace" || k === "Enter" || k === "Tab") {
@@ -27,7 +27,7 @@ export default function EmotionBox({ onNewPrediction }) {
     }
   };
 
-  // Match the keyup to the last unmatched keydown for the same key
+ 
   const handleKeyUp = (e) => {
     const k = e.key;
     const t = nowMs();
@@ -55,7 +55,7 @@ export default function EmotionBox({ onNewPrediction }) {
     setResult(null);
 
     try {
-      // Prepare keystroke events only if we have complete down+up pairs
+     
       const rawEvents = eventTimesRef.current
         .filter((r) => r[1] != null && r[2] != null)
         .map((r) => [r[0], r[1], r[2]]);
@@ -88,7 +88,7 @@ export default function EmotionBox({ onNewPrediction }) {
 
       const textMetrics = data.text_metrics ?? data.textMetrics ?? null;
 
-      // Parse scores from the ML response with safe fallbacks
+      
       if (mode === "combined") {
         combinedScore =
           typeof data.combined_score === "number"
@@ -253,7 +253,7 @@ export default function EmotionBox({ onNewPrediction }) {
         </div>
       </form>
 
-      {/* Result section — shows concise scores and expandable metrics */}
+     
       {result && (
         <div className="mt-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border-2 border-blue-200 p-4 space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
           {/* Main result header */}

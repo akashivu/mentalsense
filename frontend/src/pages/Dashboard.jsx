@@ -34,6 +34,16 @@ import {
 
 import axios from "axios";
 import { authHeader } from "../services/AuthService";
+import { isDemoMode } from "../hooks/useDemo";
+
+import {
+  
+  DEMO_PAST,
+  DEMO_WEEKLY_STATS,
+  DEMO_HOURLY,
+  DEMO_DOW,
+  DEMO_PREDICTIONS,
+} from "../demo/demoData";
 
 function SidebarNav() {
   const baseClass =
@@ -98,6 +108,8 @@ function SidebarNav() {
 
 export default function Dashboard() {
   const userId = localStorage.getItem("userId");
+  const demo = isDemoMode();
+
   const location = useLocation();
 
   const [predictions, setPredictions] = useState([]);
@@ -133,11 +145,12 @@ export default function Dashboard() {
       : combinedScore;
 
   const currentScore =
-    stressMode === "keystroke"
-      ? keystrokeScore
-      : stressMode === "text"
-      ? textScore
-      : combinedScore;
+  stressMode === "keystroke"
+    ? keystrokeScore
+    : stressMode === "emotion"
+    ? textScore
+    : combinedScore;
+
 
   const trendDir = (() => {
     if (past.length < 2) return "flat";
@@ -212,8 +225,9 @@ export default function Dashboard() {
   
   
 
-  useEffect(() => {
-    if (!userId) return;
+useEffect(() => {
+  if (!userId || demo) return;
+
 
     (async () => {
       try {
@@ -299,6 +313,25 @@ export default function Dashboard() {
       trend: trendDir,
     },
   };
+useEffect(() => {
+  if (!demo) return;
+
+  console.log("[Dashboard] Running in DEMO mode");
+
+  // core timeline
+  setPredictions(DEMO_PREDICTIONS);
+  setPast(DEMO_PAST);
+
+  // weekly
+  setWeeklyStats(DEMO_WEEKLY_STATS);
+  setWeeklyLoading(false);
+
+  // insights
+  setHourlyForInsights(DEMO_HOURLY);
+  setDowForInsights(DEMO_DOW);
+  setHourlyLoading(false);
+  setDowLoading(false);
+}, [demo]);
 
   return (
     <div className="h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-indigo-50">
@@ -360,7 +393,7 @@ export default function Dashboard() {
       {isFirstTimeUser && (
         <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
           <h3 className="text-base font-bold text-blue-900 mb-2">
-            Welcome to MentalSense 👋
+            Welcome to MentalSense 
           </h3>
           <p className="text-sm text-blue-700 leading-relaxed">
             Start typing naturally. MentalSense learns your rhythm and emotional
@@ -401,30 +434,30 @@ export default function Dashboard() {
   </section>
 
   
-  <section className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-    <div className="lg:col-span-5">
-      <InsightPanel
-        score={currentScore}
-        trend={trendDir}
-        weekly={past}
-        mode={stressMode}
-      />
-    </div>
+<section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch auto-rows-fr">
+  <div className="lg:col-span-4 h-full">
+    <InsightPanel
+      score={currentScore}
+      trend={trendDir}
+      weekly={past}
+      mode={stressMode}
+    />
+  </div>
 
-    <div className="lg:col-span-4">
-      <WeeklySummary
-        thisWeek={weeklyStats?.thisWeek}
-        lastWeek={weeklyStats?.lastWeek}
-        trend={weeklyStats?.trend}
-        loading={weeklyLoading}
-        mode={stressMode}
-      />
-    </div>
+  <div className="lg:col-span-3 h-full">
+    <WeeklySummary
+      thisWeek={weeklyStats?.thisWeek}
+      lastWeek={weeklyStats?.lastWeek}
+      trend={weeklyStats?.trend}
+      loading={weeklyLoading}
+      mode={stressMode}
+    />
+  </div>
 
-    <div className="lg:col-span-3">
-      <WeeklyTrend days={14} mode={stressMode} />
-    </div>
-  </section>
+  <div className="lg:col-span-5 h-full">
+    <WeeklyTrend days={14} mode={stressMode} />
+  </div>
+</section>
 
  
   <section>

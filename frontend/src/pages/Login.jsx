@@ -9,6 +9,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const isDemo = new URLSearchParams(window.location.search).get("demo") === "true";
 
 
 
@@ -90,6 +91,21 @@ const onSubmit = async (e) => {
     setIsLoading(false);
   }
 };
+useEffect(() => {
+  if (!isDemo) return;
+
+  console.log("[Demo] Demo mode activated");
+
+  // fake token & user
+  setToken("demo-token");
+  localStorage.setItem("userId", "demo-user");
+  localStorage.setItem("isDemo", "true");
+
+  
+  setTimeout(() => {
+    window.location.assign("/onboarding");
+  }, 600);
+}, [isDemo]);
 
 
   // Helper redirect to backend google oauth. Backend should handle redirect & callback.
@@ -185,7 +201,7 @@ const handleGoogleRedirect = () => {
          
           <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
             <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-              <span className="text-white font-bold text-lg">M</span>
+              <span className="text-slate-900 font-bold text-lg">MS</span>
             </div>
             <span className="text-slate-900 font-semibold text-xl">MentalSense</span>
           </div>
@@ -211,6 +227,18 @@ const handleGoogleRedirect = () => {
               </svg>
               Continue with Google
             </button>
+            <button
+  type="button"
+  onClick={() => window.location.assign("/demo")}
+ className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl
+           bg-gradient-to-r from-indigo-600 via-violet-600 to-purple-600
+           hover:from-indigo-700 hover:via-violet-700 hover:to-purple-700
+           text-white font-semibold shadow-lg shadow-indigo-500/30
+           transition-all"
+>
+ Try Live Demo
+</button>
+
           </div>
 
          

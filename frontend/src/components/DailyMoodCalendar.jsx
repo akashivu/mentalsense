@@ -3,6 +3,8 @@ import axios from "axios";
 import { authHeader } from "../services/AuthService";
 import { Calendar } from "lucide-react";
 import BASE from "../api/base";
+import { isDemoMode } from "../hooks/useDemo";
+import { DEMO_MOOD_DAYS } from "../demo/demoData";
 
 
 export default function DailyMoodCalendar({
@@ -12,35 +14,47 @@ export default function DailyMoodCalendar({
 }) {
   const [data, setData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const demo = isDemoMode();
 
   useEffect(() => {
-    // Fetch daily stress values whenever userId/days/mode changes
-    if (!userId) return;
+  // DEMO MODE FIRST
+  if (demo) {
+    setData(DEMO_MOOD_DAYS);
+    setLoading(false);
+    return;
+  }
 
-    async function load() {
-      try {
-       const res = await axios.get(
-  `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
-  { headers: authHeader() }
-);
+  // real user only
+  if (!userId) {
+    setLoading(false);
+    return;
+  }
 
-        const rows = Array.isArray(res.data)
-  ? res.data
-  : Array.isArray(res.data?.data)
-  ? res.data.data
-  : [];
+  async function load() {
+    try {
+      const res = await axios.get(
+        `${BASE}/user/${userId}/daily-stress?days=${days}&mode=${mode}`,
+        { headers: authHeader() }
+      );
 
-setData(rows);
+      const rows = Array.isArray(res.data)
+        ? res.data
+        : Array.isArray(res.data?.data)
+        ? res.data.data
+        : [];
 
-      } catch (err) {
-        console.error("DailyMoodCalendar error:", err);
-      } finally {
-        setLoading(false);
-      }
+      setData(rows);
+    } catch (err) {
+      console.error("DailyMoodCalendar error:", err);
+      setData([]);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    load();
-  }, [userId, days, mode]);
+  load();
+}, [userId, days, mode, demo]);
+
 
   // Convert API array into a quick lookup map for ISO date → score
   const stressByDay = new Map();

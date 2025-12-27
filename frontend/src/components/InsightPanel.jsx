@@ -1,5 +1,11 @@
 import React from "react";
-import { Lightbulb, TrendingUp, TrendingDown, Minus, Target } from "lucide-react";
+import {
+  Lightbulb,
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Target,
+} from "lucide-react";
 
 export default function InsightPanel({ score, trend, weekly, mode = "combined" }) {
   const safeScore =
@@ -33,46 +39,64 @@ export default function InsightPanel({ score, trend, weekly, mode = "combined" }
     return "Your stress is relatively stable over the week.";
   })();
 
-  const TrendIcon = trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
-  
-  const trendColor = trend === "up" ? "text-rose-600" : trend === "down" ? "text-emerald-600" : "text-gray-600";
-  const trendBg = trend === "up" ? "bg-rose-50" : trend === "down" ? "bg-emerald-50" : "bg-gray-50";
+  const TrendIcon =
+    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
 
-  const stressColor = safeScore > 0.7 ? "text-rose-600" : safeScore > 0.4 ? "text-amber-600" : "text-emerald-600";
-  const stressBg = safeScore > 0.7 ? "bg-rose-50" : safeScore > 0.4 ? "bg-amber-50" : "bg-emerald-50";
+  const trendColor =
+    trend === "up"
+      ? "text-rose-600"
+      : trend === "down"
+      ? "text-emerald-600"
+      : "text-gray-600";
+
+  const stressColor =
+    safeScore > 0.7
+      ? "text-rose-600"
+      : safeScore > 0.4
+      ? "text-amber-600"
+      : "text-emerald-600";
+
+  const stressBg =
+    safeScore > 0.7
+      ? "bg-rose-50 border-rose-200"
+      : safeScore > 0.4
+      ? "bg-amber-50 border-amber-200"
+      : "bg-emerald-50 border-emerald-200";
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 transition-all duration-300 hover:shadow-lg hover:border-gray-300 group min-h-[280px]">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-amber-500 to-orange-600 flex items-center justify-center shadow-lg group-hover:scale-110 transition-transform">
-            <Lightbulb className="h-5 w-5 text-white" strokeWidth={2.5} />
-          </div>
-          <div>
-            <h2 className="text-sm font-bold text-gray-900">
-              {title}
-            </h2>
-            <p className="text-xs text-gray-500 font-medium">Real-time analysis</p>
-          </div>
+    <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 transition-all duration-300 hover:shadow-lg hover:border-gray-300 group min-h-[400px]">
+
+      {/* HEADER */}
+      <div className="flex items-center gap-3">
+        <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md group-hover:scale-110 transition-transform">
+          <Lightbulb className="h-5 w-5 text-white" strokeWidth={2.5} />
+        </div>
+        <div>
+          <h2 className="text-sm font-bold text-gray-900">
+            {title}
+          </h2>
+          <p className="text-xs text-gray-500 font-medium">
+            Real-time analysis
+          </p>
         </div>
       </div>
 
-      {/* Main insight card */}
-      <div className={`p-4 ${stressBg} rounded-xl border-2 ${safeScore > 0.7 ? "border-rose-200" : safeScore > 0.4 ? "border-amber-200" : "border-emerald-200"}`}>
+      {/* INSIGHT CARD */}
+      <div className={`p-4 rounded-xl border-2 ${stressBg}`}>
         <p className="text-sm text-gray-800 leading-relaxed font-medium mb-2">
-          <span className="font-bold text-gray-900">{sourceLabel}</span> {insight}
+          <span className="font-bold text-gray-900">{sourceLabel}</span>{" "}
+          {insight}
         </p>
-        
+
         <div className="flex items-center gap-2 mt-3 pt-3 border-t border-gray-200">
           <TrendIcon className={`h-4 w-4 ${trendColor}`} strokeWidth={2.5} />
-          <p className="text-sm text-gray-800 leading-relaxed font-medium">
+          <p className="text-sm text-gray-800 font-medium">
             {trendMsg}
           </p>
         </div>
       </div>
 
-      {/* Score display */}
+      {/* SCORE CARD */}
       <div className="flex items-center justify-between p-4 bg-gradient-to-br from-gray-50 to-white rounded-xl border border-gray-200 shadow-sm">
         <div>
           <p className="text-xs font-semibold text-gray-600 mb-1 uppercase tracking-wide">
@@ -86,19 +110,25 @@ export default function InsightPanel({ score, trend, weekly, mode = "combined" }
               : "Overall stress"}
           </p>
         </div>
-        
+
         <div className="text-right">
           <span className={`text-3xl font-black ${stressColor}`}>
             {pct}%
           </span>
-          <p className="text-xs text-gray-500 font-medium mt-1">out of 100</p>
+          <p className="text-xs text-gray-500 font-medium mt-1">
+            out of 100
+          </p>
         </div>
       </div>
 
-      {/* Action button */}
+      {/* CTA BUTTON */}
       <button
         type="button"
-        className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 text-white px-4 py-3 text-sm font-bold shadow-lg transition-all hover:scale-105"
+        className="mt-auto inline-flex items-center justify-center gap-2 rounded-xl
+                   bg-gradient-to-r from-blue-500 to-indigo-600
+                   hover:from-blue-600 hover:to-indigo-700
+                   text-white px-4 py-3 text-sm font-bold shadow-lg
+                   transition-all hover:scale-105"
       >
         <Target className="h-4 w-4" strokeWidth={2.5} />
         <span>Get Personalized Tips</span>
@@ -106,3 +136,4 @@ export default function InsightPanel({ score, trend, weekly, mode = "combined" }
     </div>
   );
 }
+

@@ -12,6 +12,14 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
+/* ================================
+   DEMO CONFIG (REMOVE LATER)
+================================ */
+const DEMO_MODE = true;
+
+const DEMO_SCORE = 0.15;     // 47% → Moderate, recruiter-safe
+const DEMO_TREND = "down";   // Settling down looks positive
+
 // Center text plugin
 const centerTextPlugin = {
   id: "centerText",
@@ -28,10 +36,10 @@ const centerTextPlugin = {
     ctx.textBaseline = "middle";
 
     ctx.fillStyle = "#0f172a";
-    ctx.font = "700 18px system-ui, -apple-system, 'Segoe UI'";
+    ctx.font = "700 18px system-ui";
     ctx.fillText(percent, centerX, centerY - 6);
 
-    ctx.font = "500 11px system-ui, -apple-system, 'Segoe UI'";
+    ctx.font = "500 11px system-ui";
     ctx.fillStyle = "#6B7280";
     ctx.fillText("current stress", centerX, centerY + 14);
 
@@ -40,12 +48,18 @@ const centerTextPlugin = {
 };
 
 export default function SummaryCard({ score, trend, mode = "combined" }) {
-  const safeScore =
-    typeof score === "number" ? Math.max(0, Math.min(1, score)) : 0;
 
-  const percent = (safeScore * 100).toFixed(0);
+  /* ✅ DEMO FALLBACK LOGIC */
+  const resolvedScore =
+    typeof score === "number" ? score : DEMO_MODE ? DEMO_SCORE : 0;
 
-  // Human-friendly stress level
+  const resolvedTrend =
+    trend ?? (DEMO_MODE ? DEMO_TREND : "stable");
+
+  const safeScore = Math.max(0, Math.min(1, resolvedScore));
+  const percent = Math.round(safeScore * 100);
+
+  /* Stress level */
   let level = "Low";
   if (safeScore > 0.7) level = "High";
   else if (safeScore > 0.4) level = "Moderate";
@@ -57,25 +71,29 @@ export default function SummaryCard({ score, trend, mode = "combined" }) {
       ? "bg-amber-100 text-amber-700 border-amber-300"
       : "bg-emerald-100 text-emerald-700 border-emerald-300";
 
-  // Trend (supportive wording)
+  /* Trend */
   const trendLabel =
-    trend === "up"
+    resolvedTrend === "up"
       ? "Increasing"
-      : trend === "down"
+      : resolvedTrend === "down"
       ? "Settling down"
       : "Stable";
 
   const TrendIcon =
-    trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
+    resolvedTrend === "up"
+      ? TrendingUp
+      : resolvedTrend === "down"
+      ? TrendingDown
+      : Minus;
 
   const trendColor =
-    trend === "up"
+    resolvedTrend === "up"
       ? "text-rose-600"
-      : trend === "down"
+      : resolvedTrend === "down"
       ? "text-emerald-600"
       : "text-gray-600";
 
-  // Mode text
+  /* Mode text */
   const title =
     mode === "keystroke"
       ? "Typing Stress"
@@ -124,72 +142,49 @@ export default function SummaryCard({ score, trend, mode = "combined" }) {
 
   const chartOptions = {
     cutout: "72%",
-    responsive: true,
-    maintainAspectRatio: false,
     plugins: {
       legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: (ctx) =>
-            ctx.dataIndex === 0
-              ? `Stress level: ${percent}%`
-              : `Remaining balance: ${100 - Number(percent)}%`,
-        },
-      },
-      centerText: {
-        text: `${percent}%`,
-      },
+      centerText: { text: `${percent}%` },
     },
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-md px-4 py-3 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:shadow-xl hover:border-gray-300 group">
+    <div className="rounded-2xl bg-white border border-gray-200 shadow-md px-4 py-3 flex gap-3 min-h-[140px]">
 
-      <div className="relative z-10 flex gap-3">
-
-        {/* Left */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2 mb-3">
-            <div className="flex items-center gap-2">
-              <div
-                className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg`}
-              >
-                <ModeIcon className="h-4 w-4 text-white" strokeWidth={2.5} />
-              </div>
-              <div>
-                <h2 className="text-sm font-bold text-gray-900">{title}</h2>
-                <p className="text-xs text-gray-500">{description}</p>
-              </div>
+      {/* LEFT */}
+      <div className="flex-1">
+        <div className="flex items-start justify-between mb-3">
+          <div className="flex items-center gap-2">
+            <div className={`h-9 w-9 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center`}>
+              <ModeIcon className="h-4 w-4 text-white" />
             </div>
-
-            <span
-              className={`inline-flex items-center px-3 py-1 rounded-full text-xs font-bold border ${levelPillClass}`}
-            >
-              {level} level
-            </span>
-          </div>
-
-          {/* Trend */}
-          <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border border-gray-100">
-            <span className="text-xs text-gray-600 font-semibold">
-              Recent trend
-            </span>
-            <div className={`flex items-center gap-1.5 ${trendColor} font-bold text-sm`}>
-              <TrendIcon className="h-4 w-4" strokeWidth={2.5} />
-              <span>{trendLabel}</span>
+            <div>
+              <h2 className="text-sm font-bold">{title}</h2>
+              <p className="text-xs text-gray-500">{description}</p>
             </div>
           </div>
+
+          <span className={`px-3 py-1 rounded-full text-xs font-bold border ${levelPillClass}`}>
+            {level}
+          </span>
         </div>
 
-        {/* Right */}
-        <div className="w-28 h-28 flex items-center justify-center">
-          <Doughnut
-            data={chartData}
-            options={chartOptions}
-            plugins={[centerTextPlugin]}
-          />
+        <div className="flex items-center justify-between p-2 bg-gray-50 rounded-lg border">
+          <span className="text-xs font-semibold text-gray-600">Recent trend</span>
+          <div className={`flex items-center gap-1 ${trendColor} font-bold`}>
+            <TrendIcon className="h-4 w-4" />
+            {trendLabel}
+          </div>
         </div>
+      </div>
 
+      {/* RIGHT */}
+      <div className="w-28 h-28">
+        <Doughnut
+          data={chartData}
+          options={chartOptions}
+          plugins={[centerTextPlugin]}
+        />
       </div>
     </div>
   );
