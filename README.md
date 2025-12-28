@@ -24,8 +24,10 @@ All while keeping **user privacy, consent, and transparency** at the core.
 ---
 
 ##  Key Features
+- **Full Personalized Experience (Login Required)**
+   Real users can access the complete MentalSense experience with personalized insights after setup and explicit consent.
 
-- **Demo Mode (No Login Required)**  
+- **Demo Mode (Optional, No Login Required)**  
   Explore onboarding and dashboards instantly using sample data.
 
 - **Multimodal AI Stress Estimation**  
