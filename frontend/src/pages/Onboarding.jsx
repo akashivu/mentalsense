@@ -73,15 +73,58 @@ export default function Onboarding() {
   const percent = useMemo(() => Math.round((step / TOTAL_STEPS) * 100), [step]);
   const shouldReduceMotion = useReducedMotion();
   const inputRef = useRef(null);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [validationMessage, setValidationMessage] = useState("");
+React.useEffect(() => {
+  if (validationMessage) {
+    const timer = setTimeout(() => {
+      setValidationMessage("");
+    }, 2000);
 
-  const handleNext = () => {
-    if (step === TOTAL_STEPS) {
-      setCompleted(true);
-      return;
-    }
-    setDirection("forward");
-    setStep((prev) => Math.min(TOTAL_STEPS, prev + 1));
-  };
+    return () => clearTimeout(timer);
+  }
+}, [validationMessage]);
+
+
+const handleNext = () => {
+  if (isTransitioning) return;
+
+  // Step 4 validation
+  if (
+    step === 4 &&
+    (!formData.focus || !formData.schedule || !formData.checkIns)
+  ) {
+    setValidationMessage("Please select all options to continue");
+    return;
+  }
+if (
+    step === 5 &&
+    (!formData.consentData || !formData.consentCoach)
+  ) {
+    setValidationMessage("Please accept both consent options to continue");
+    return;
+  }
+  //  Step 6 validation
+  if (step === 6 && !formData.goal) {
+    setValidationMessage("Please select a goal to complete setup");
+    return;
+  }
+
+  // clear error
+  setValidationMessage("");
+  setIsTransitioning(true);
+  setDirection("forward");
+
+  if (step === TOTAL_STEPS) {
+    setCompleted(true);
+    setIsTransitioning(false);
+    return;
+  }
+
+  setStep((prev) => prev + 1);
+  setTimeout(() => setIsTransitioning(false), 400);
+};
+
 
   const handleBack = () => {
     if (step === 1) return;
@@ -95,9 +138,7 @@ export default function Onboarding() {
 
   const isNextDisabled = useMemo(() => {
     if (step === 1) return !formData.name.trim();
-    if (step === 4) return !formData.focus || !formData.schedule || !formData.checkIns;
-    if (step === 5) return !(formData.consentData && formData.consentCoach);
-    if (step === 6) return !formData.goal;
+   
     return false;
   }, [step, formData]);
 
@@ -293,12 +334,39 @@ export default function Onboarding() {
 
        
         <div className="border-t border-slate-100 px-6 py-4 lg:px-12 bg-white">
+        <AnimatePresence>
+  {validationMessage && (
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: 8 }}
+      className="
+        fixed
+        bottom-[calc(env(safe-area-inset-bottom)+88px)]
+        left-1/2
+        -translate-x-1/2
+        bg-gray-900
+        text-white
+        px-4 py-2
+        rounded-xl
+        shadow-xl
+        text-sm
+        z-[100]
+        pointer-events-none
+      "
+    >
+      {validationMessage}
+    </motion.div>
+  )}
+</AnimatePresence>
+
+
           <div className="flex items-center justify-between max-w-2xl mx-auto">
-            <button onClick={handleBack} disabled={step === 1} className={`flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium ${ step === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }`}>
+            <button onClick={handleBack} disabled={step === 1} className={` touch-manipulation flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium ${ step === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }`}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back
             </button>
 
-            <motion.button onClick={handleNext} disabled={isNextDisabled} whileHover={isNextDisabled ? {} : { scale: 1.02 }} whileTap={isNextDisabled ? {} : { scale: 0.98 }} className={`flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${ isNextDisabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30' }`}>
+            <motion.button onClick={handleNext} disabled={isNextDisabled} whileHover={isNextDisabled ? {} : { scale: 1.02 }} whileTap={isNextDisabled ? {} : { scale: 0.98 }} className={` touch-manipulation flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${ isNextDisabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30' }`}>
               {step === TOTAL_STEPS ? "Complete Setup" : "Continue"}
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
             </motion.button>

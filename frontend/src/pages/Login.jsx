@@ -198,13 +198,20 @@ const handleGoogleRedirect = () => {
       {/* Right Panel - Login Form */}
       <div className="w-full lg:w-1/2 flex items-center justify-center bg-white p-8">
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }} className="w-full max-w-md">
-         
-          <div className="lg:hidden flex items-center gap-3 mb-8 justify-center">
-            <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-400 to-blue-500 flex items-center justify-center">
-              <span className="text-slate-900 font-bold text-lg">MS</span>
-            </div>
-            <span className="text-slate-900 font-semibold text-xl">MentalSense</span>
-          </div>
+       <div className="lg:hidden flex items-center justify-center gap-3 mb-8">
+  <div className="w-11 h-11 rounded-2xl 
+                  bg-gradient-to-br from-blue-400 via-blue-500 to-indigo-500
+                  flex items-center justify-center shadow-md">
+    <span className="text-white font-bold text-sm tracking-widest">
+      MS
+    </span>
+  </div>
+
+  <span className="text-gray-900 font-bold text-lg tracking-tight">
+    Mental<span className="text-gray-900">Sense</span>
+  </span>
+</div>
+
 
          
           <div className="text-center lg:text-left mb-8">
