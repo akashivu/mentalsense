@@ -18,3 +18,12 @@
     margin: 0;
   }
 }
+html, body {
+  overflow-x: hidden;
+}
+canvas {
+  display: block;
+  max-width: 100% !important;
+}
+/* GLOBAL 80% UI SCALE — SAFE WAY */
+

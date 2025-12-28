@@ -9,9 +9,6 @@ import {
   Sparkles,
 } from "lucide-react";
 
-/* --------------------------------------------
-   Helpers — human-friendly mode copy
---------------------------------------------- */
 
 function getModeLabel(mode) {
   if (mode === "keystroke") return "Keystroke stress";
@@ -29,27 +26,25 @@ function getModeHint(mode) {
   return "Blended from both typing behavior and emotional language signals.";
 }
 
-/* --------------------------------------------
-   AI Coach Panel
---------------------------------------------- */
+
 
 export default function AiCoachPanel({
   mode = "combined",
-  isLearning = true, // later connect to data count (Day 24)
+  isLearning = true, 
 }) {
   const modeLabel = getModeLabel(mode);
   const modeHint = getModeHint(mode);
 
   return (
     <div className="relative overflow-hidden rounded-2xl bg-white border border-gray-200 shadow-md p-5 flex flex-col gap-4 transition-all duration-300 hover:shadow-lg hover:border-gray-300 group">
-      {/* Decorative background accents */}
+     
       <div className="pointer-events-none absolute inset-0 opacity-40">
         <div className="absolute -top-20 right-[-30px] h-40 w-40 rounded-full bg-gradient-to-br from-indigo-200 to-purple-200 blur-3xl" />
         <div className="absolute bottom-[-40px] left-[-30px] h-40 w-40 rounded-full bg-gradient-to-br from-blue-200 to-cyan-200 blur-3xl" />
       </div>
 
       <div className="relative z-10 flex flex-col gap-3.5">
-        {/* Header */}
+      
         <div className="flex items-start justify-between gap-3">
           <div className="flex items-center gap-3">
             <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-indigo-500 via-violet-500 to-fuchsia-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 group-hover:scale-110 transition-transform">
@@ -74,7 +69,7 @@ export default function AiCoachPanel({
           </span>
         </div>
 
-        {/* Mode explanation pill */}
+       
         <div className="rounded-xl bg-gradient-to-br from-indigo-50 to-purple-50 border border-indigo-200 px-3.5 py-3 flex flex-col gap-1.5">
           <div className="flex items-center justify-between gap-2">
             <p className="text-sm font-bold text-gray-900">{modeLabel}</p>
@@ -88,7 +83,7 @@ export default function AiCoachPanel({
           </p>
         </div>
 
-        {/* Main message */}
+        
         <div className="space-y-2 p-3.5 rounded-xl bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200">
           {isLearning ? (
             <>
@@ -121,7 +116,7 @@ export default function AiCoachPanel({
           )}
         </div>
 
-        {/* Nudges */}
+        
         <div className="rounded-xl bg-gradient-to-br from-gray-50 to-slate-50 border border-gray-200 px-3.5 py-3 space-y-2">
           <p className="text-xs font-bold text-gray-900 mb-1 flex items-center gap-2">
             Today’s gentle nudges
@@ -174,9 +169,7 @@ export default function AiCoachPanel({
   );
 }
 
-/* --------------------------------------------
-   Reusable insight row
---------------------------------------------- */
+
 
 function InsightRow({ icon, label, text, color }) {
   const colorClasses = {

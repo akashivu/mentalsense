@@ -108,7 +108,11 @@ export default function WeeklyTrend({
 
   if (loading) {
     return (
-      <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 px-5 py-5 min-h-[400px] flex flex-col hover:shadow-xl transition-all duration-300">
+     <div className="w-full h-full min-h-[400px]
+                bg-white rounded-2xl shadow-lg border border-slate-200/60
+                px-5 py-5 flex flex-col
+                relative overflow-hidden">
+
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-2">
             <div className={`h-10 w-10 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg`}>
@@ -284,8 +288,14 @@ export default function WeeklyTrend({
           onClick={() => setIsExpanded(false)}
         />
         
-        <div className="fixed inset-4 md:inset-8 z-50 animate-in zoom-in-95 duration-200">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200/60 px-6 py-6 h-full flex flex-col">
+       <div className="fixed inset-4 md:inset-8 z-50 animate-in zoom-in-95 duration-200 overflow-hidden">
+
+          <div className="bg-white rounded-2xl shadow-lg border border-slate-200/60 
+                px-5 py-5 min-h-[400px] h-full
+                flex flex-col
+                relative overflow-hidden
+                hover:shadow-xl transition-all duration-300 group">
+
             <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-3">
                 <div className={`h-12 w-12 rounded-xl bg-gradient-to-br ${gradientClass} flex items-center justify-center shadow-lg`}>
@@ -307,9 +317,10 @@ export default function WeeklyTrend({
               </button>
             </div>
 
-            <div className="flex-1 min-h-0">
-              <Bar data={chartData} options={options} />
-            </div>
+            <div className="flex-1 min-h-0 w-full overflow-hidden">
+  <Bar data={chartData} options={options} />
+</div>
+
 
             <div className="mt-4 flex items-center justify-center gap-6 text-sm text-slate-600 pt-4 border-t border-slate-100">
               <div className="flex items-center gap-2">

@@ -12,15 +12,13 @@ import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
-/* ================================
-   DEMO CONFIG (REMOVE LATER)
-================================ */
+
 const DEMO_MODE = true;
 
-const DEMO_SCORE = 0.15;     // 47% → Moderate, recruiter-safe
-const DEMO_TREND = "down";   // Settling down looks positive
+const DEMO_SCORE = 0.15;    
+const DEMO_TREND = "down";   
 
-// Center text plugin
+
 const centerTextPlugin = {
   id: "centerText",
   afterDraw(chart) {
@@ -49,7 +47,7 @@ const centerTextPlugin = {
 
 export default function SummaryCard({ score, trend, mode = "combined" }) {
 
-  /* ✅ DEMO FALLBACK LOGIC */
+
   const resolvedScore =
     typeof score === "number" ? score : DEMO_MODE ? DEMO_SCORE : 0;
 

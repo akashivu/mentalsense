@@ -45,7 +45,7 @@ import {
   DEMO_PREDICTIONS,
 } from "../demo/demoData";
 
-function SidebarNav() {
+function SidebarNav({ onNavigate }) {
   const baseClass =
     "flex items-center gap-3 px-4 py-2.5 rounded-lg text-sm font-medium transition-all duration-200";
   const activeClass = "bg-indigo-600 text-white shadow-sm";
@@ -53,9 +53,12 @@ function SidebarNav() {
     "text-gray-300 hover:bg-gray-800 hover:text-white";
 
   return (
-    <nav className="flex-1 px-3 py-6 space-y-1">
+ <nav className="px-3 py-4 space-y-1">
+
+
       <NavLink
         to="/dashboard"
+        onClick={onNavigate}
         end
         className={({ isActive }) => `${baseClass} ${isActive ? activeClass : normalClass}`}
       >
@@ -65,6 +68,7 @@ function SidebarNav() {
 
       <NavLink
         to="/dashboard#home"
+         onClick={onNavigate}
         className={({ isActive }) =>
           `${baseClass} ${isActive ? "bg-gray-800 text-white" : normalClass}`
         }
@@ -75,6 +79,7 @@ function SidebarNav() {
 
       <NavLink
         to="/dashboard#weekly"
+         onClick={onNavigate}
         className={({ isActive }) =>
           `${baseClass} ${isActive ? "bg-gray-800 text-white" : normalClass}`
         }
@@ -85,6 +90,7 @@ function SidebarNav() {
 
       <NavLink
         to="/dashboard#engagement"
+         onClick={onNavigate}
         className={({ isActive }) =>
           `${baseClass} ${isActive ? "bg-gray-800 text-white" : normalClass}`
         }
@@ -95,6 +101,7 @@ function SidebarNav() {
 
       <NavLink
         to="/dashboard#aicoach"
+         onClick={onNavigate}
         className={({ isActive }) =>
           `${baseClass} ${isActive ? "bg-gray-800 text-white" : normalClass}`
         }
@@ -115,6 +122,7 @@ export default function Dashboard() {
   const [predictions, setPredictions] = useState([]);
   const [past, setPast] = useState([]);
   const [future, setFuture] = useState([]);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
 
   const [weeklyStats, setWeeklyStats] = useState(null);
   const [weeklyLoading, setWeeklyLoading] = useState(true);
@@ -334,108 +342,166 @@ useEffect(() => {
 }, [demo]);
 
   return (
-    <div className="h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-indigo-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800 flex-shrink-0 overflow-hidden flex flex-col shadow-2xl">
-        {/* Logo */}
-        <div className="p-5 border-b border-gray-800">
-          <div className="flex items-center gap-3">
-            <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 via-purple-500 to-pink-500 flex items-center justify-center shadow-lg">
-              <Brain className="h-6 w-6 text-white" strokeWidth={2.5} />
-            </div>
-            <div>
-              <h2 className="text-xl font-bold tracking-tight text-white">MentalSense</h2>
-              <p className="text-xs text-gray-400 font-medium">AI Wellness Platform</p>
-            </div>
-          </div>
-        </div>
+   <div className="min-h-screen flex overflow-hidden bg-gradient-to-br from-gray-50 via-gray-100 to-indigo-50 ">
+     {mobileSidebarOpen && (
+  <div className="fixed inset-0 z-50 lg:hidden">
+    {/* Backdrop */}
+    <div
+      className="absolute inset-0 bg-black/40"
+      onClick={() => setMobileSidebarOpen(false)}
+    />
 
-        <SidebarNav />
+    {/* Drawer */}
+    <aside className="absolute left-0 top-0 h-full w-64 bg-gray-900 flex flex-col">
+      <div className="p-5 border-b border-gray-800">
+        <h2 className="text-white font-bold text-lg">MentalSense</h2>
+      </div>
+         <SidebarNav onNavigate={() => setMobileSidebarOpen(false)} />
+      
+    </aside>
+  </div>
+)}
 
-        {/* Logout */}
-        <div className="p-3 border-t border-gray-800">
-          <button
-            onClick={() => {
-              localStorage.clear();
-              window.location.href = "/login";
-            }}
-            className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg bg-red-600 hover:bg-red-700 text-white font-medium text-sm transition-all shadow-sm"
-          >
-            <LogOut className="h-5 w-5" strokeWidth={2} />
-            <span>Logout</span>
-          </button>
-        </div>
-      </aside>
+  <aside
+  className="
+    hidden lg:flex
+    fixed left-0 top-0
+    h-screen w-64
+    bg-gradient-to-b from-gray-900 via-gray-900 to-gray-800
+    flex-col
+    z-40
+  " 
+>
+  <div className="p-5 border-b border-gray-800 shrink-0">
+    <div className="flex items-center gap-3">
+      <div className="h-11 w-11 rounded-xl bg-gradient-to-br from-indigo-500 to-purple-500 flex items-center justify-center">
+        <Brain className="h-6 w-6 text-white" />
+      </div>
+      <div>
+        <h2 className="text-xl font-bold text-white">MentalSense</h2>
+        <p className="text-xs text-gray-400">AI Wellness Platform</p>
+      </div>
+    </div>
+  </div>
 
+  
+  <div className="flex-1  overflow-y-auto">
+    <SidebarNav />
+  </div>
+
+  
+  <div className="p-3 border-t border-gray-800 shrink-0">
+    <button
+      className="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg bg-red-600 text-white"
+    >
+      <LogOut className="h-5 w-5" />
+      Logout
+    </button>
+  </div>
+</aside>
+
+
+       
       {/* Main Content */}
-      <div className="flex-1 overflow-y-auto relative">
-        <div className="w-full max-w-[1600px] mx-auto px-6 py-6 space-y-6">
+      <div className="flex-1 overflow-y-auto relative lg:ml-64" >
+       <div className="max-w-[1600px] mx-auto px-6 py-6 space-y-6" style={{ zoom: "0.8" }}>
+
+        
           {/* Header */}
-          <header className="flex items-center justify-between bg-white/80 backdrop-blur-sm rounded-2xl px-7 py-5 shadow-lg border border-white/60">
-            <div>
-              <h1 className="text-3xl font-bold bg-gradient-to-r from-gray-900 via-indigo-800 to-purple-800 bg-clip-text text-transparent tracking-tight">
-                Dashboard
-              </h1>
-              <p className="text-sm text-gray-600 mt-1.5 font-medium">Monitor your mental wellness journey</p>
-            </div>
+         <header className="flex items-center justify-between bg-white rounded-lg px-6 py-4 shadow-sm border border-gray-200">
+  <div>
+    <h1 className="text-2xl font-semibold text-gray-900">
+      Dashboard
+    </h1>
+    <p className="text-sm text-gray-600 mt-0.5">Mental wellness insights and analytics</p>
+  </div>
 
-            <div className="hidden md:flex items-center gap-2 text-sm font-semibold rounded-xl px-5 py-2.5 bg-gradient-to-r from-indigo-50 via-purple-50 to-pink-50 text-indigo-700 border border-indigo-100 shadow-sm">
-              <span className="w-2 h-2 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 animate-pulse shadow-sm"></span>
-              AI Coach Active ✨
-            </div>
-          </header>
-
+  <div className="hidden md:flex items-center gap-2.5 text-sm font-medium rounded-lg px-4 py-2 bg-blue-50 text-blue-700 border border-blue-100">
+    <span className="w-2 h-2 rounded-full bg-blue-500"></span>
+    AI Analysis Active
+  </div>
+  
+  <button
+    className="lg:hidden p-2.5 rounded-lg bg-gray-50 text-gray-700 hover:bg-gray-100 border border-gray-200 transition-colors"
+    onClick={() => setMobileSidebarOpen(true)}
+    aria-label="Open navigation menu"
+  >
+    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+    </svg>
+  </button>
+</header>
          <main className="space-y-8 pb-10">
 
   
-  {(isFirstTimeUser || anomalyMessage) && (
-    <section className="space-y-4">
-      {isFirstTimeUser && (
-        <div className="bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200 rounded-xl p-6 shadow-sm">
-          <h3 className="text-base font-bold text-blue-900 mb-2">
-            Welcome to MentalSense 
-          </h3>
-          <p className="text-sm text-blue-700 leading-relaxed">
-            Start typing naturally. MentalSense learns your rhythm and emotional
-            signals over time — privately and securely.
+ {(isFirstTimeUser || anomalyMessage || isDemoMode) && (
+  <section className="space-y-4">
+    {isFirstTimeUser && (
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-5">
+        <h3 className="text-sm font-semibold text-gray-900 mb-1.5">
+          Welcome to MentalSense
+        </h3>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Begin typing naturally. The system analyzes your patterns over time with complete privacy and security.
+        </p>
+      </div>
+    )}
+    
+    {isDemoMode && (
+      <div className="border border-gray-300 bg-gray-50 rounded-lg p-5 space-y-3">
+        <div>
+          <p className="text-sm font-medium text-gray-900 mb-1">
+            Demo Mode
+          </p>
+          <p className="text-sm text-gray-600 leading-relaxed">
+            Currently displaying sample data for demonstration purposes. Actual insights will reflect your personal patterns once you begin using the application.
           </p>
         </div>
-      )}
-      <AnomalyAlert message={anomalyMessage} />
-    </section>
-  )}
+      </div>
+    )}
 
-
-  <section className="grid grid-cols-1 xl:grid-cols-12 gap-6">
-    
-    <div className="xl:col-span-8 space-y-6">
-      <HeroStressCard
-        data={heroStress}
-        stressMode={stressMode}
-        onChange={setStressMode}
-      />
-
-      <TrendGraph
-        past={past}
-        future={future}
-        mode={stressMode}
-      />
-
-      <EngagementTimeline
-        userId={userId}
-        mode={stressMode}
-      />
-    </div>
-
-    
-    <div className="xl:col-span-4 xl:sticky xl:top-6 h-fit">
-      <AiCoachPanel mode={stressMode} />
-    </div>
+    <AnomalyAlert message={anomalyMessage} />
   </section>
+)}
+
+
+  <section section id="engagement" className="grid grid-cols-1 xl:grid-cols-12 gap-6">
+
+  {/* Left main content */}
+  <div  className="xl:col-span-8 space-y-6">
+    <HeroStressCard
+      data={heroStress}
+      stressMode={stressMode}
+      onChange={setStressMode}
+    />
+
+    <TrendGraph
+      past={past}
+      future={future}
+      mode={stressMode}
+    />
+
+    <EngagementTimeline
+      userId={userId}
+      mode={stressMode}
+    />
+  </div>
 
   
-<section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch auto-rows-fr">
-  <div className="lg:col-span-4 h-full">
+  <div  section id="aicoach" className="xl:col-span-4 space-y-6 xl:sticky xl:top-6">
+    <AiCoachPanel mode={stressMode} />
+
+    
+    <WeeklyTrend days={14} mode={stressMode} />
+  </div>
+
+</section>
+
+  
+<section className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+
+  {/* Insight */}
+  <div className="lg:col-span-7 flex min-w-0">
     <InsightPanel
       score={currentScore}
       trend={trendDir}
@@ -444,20 +510,25 @@ useEffect(() => {
     />
   </div>
 
-  <div className="lg:col-span-3 h-full">
-    <WeeklySummary
-      thisWeek={weeklyStats?.thisWeek}
-      lastWeek={weeklyStats?.lastWeek}
-      trend={weeklyStats?.trend}
-      loading={weeklyLoading}
-      mode={stressMode}
-    />
-  </div>
+  
 
-  <div className="lg:col-span-5 h-full">
-    <WeeklyTrend days={14} mode={stressMode} />
-  </div>
+  
+    <div  section id="weekly" className="col-span-5 flex min-w-0">
+      <WeeklySummary
+        thisWeek={weeklyStats?.thisWeek}
+        lastWeek={weeklyStats?.lastWeek}
+        trend={weeklyStats?.trend}
+        loading={weeklyLoading}
+        mode={stressMode}
+      />
+    </div>
+
+  
+    
+
+  
 </section>
+
 
  
   <section>

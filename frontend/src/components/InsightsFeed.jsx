@@ -6,9 +6,7 @@ import {
   TrendingUp,
 } from "lucide-react";
 
-/* ======================================
-   ICON THEME (MATCHES ENGAGEMENT TIMELINE)
-====================================== */
+
 const ICON_THEME = {
   keystroke: {
     bg: "bg-gradient-to-br from-blue-500 to-indigo-600",
@@ -31,9 +29,7 @@ export default function InsightsFeed({
   loading,
   mode = "combined",
 }) {
-  /* ===============================
-     SAFETY: normalize mode
-  =============================== */
+ 
   const safeMode =
     mode === "keystroke" || mode === "emotion" || mode === "combined"
       ? mode
@@ -55,9 +51,7 @@ export default function InsightsFeed({
       ? "your emotional tone"
       : "your overall signals";
 
-  /* ===============================
-     LOADING STATE
-  =============================== */
+
   if (loading) {
     return (
       <div className="bg-white dark:bg-slate-900 rounded-2xl px-5 py-5 shadow-lg border border-slate-200 dark:border-slate-700 w-full min-h-[260px] flex flex-col">
@@ -85,9 +79,7 @@ export default function InsightsFeed({
     );
   }
 
-  /* ===============================
-     EMPTY STATE
-  =============================== */
+
   if (
     (!hourly || hourly.length === 0) &&
     (!dow || dow.length === 0) &&
@@ -122,9 +114,8 @@ export default function InsightsFeed({
     );
   }
 
-  /* ===============================
-     BUILD INSIGHTS (UNCHANGED LOGIC)
-  =============================== */
+
+
   const insights = [];
   const dayNames = [
     "Sunday",
@@ -174,9 +165,7 @@ export default function InsightsFeed({
     );
   }
 
-  /* ===============================
-     MAIN RENDER
-  =============================== */
+  
   return (
     <div className="bg-white dark:bg-slate-900 rounded-2xl px-5 py-5 shadow-lg border border-slate-200 dark:border-slate-700 w-full min-h-[260px] flex flex-col">
       

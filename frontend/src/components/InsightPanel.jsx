@@ -64,7 +64,10 @@ export default function InsightPanel({ score, trend, weekly, mode = "combined" }
       : "bg-emerald-50 border-emerald-200";
 
   return (
-    <div className="bg-white rounded-2xl shadow-md border border-gray-200 p-5 flex flex-col gap-4 transition-all duration-300 hover:shadow-lg hover:border-gray-300 group min-h-[400px]">
+   <div className="w-full h-full min-h-[400px]
+                bg-white rounded-2xl shadow-md border border-gray-200
+                p-5 flex flex-col gap-4">
+
 
       {/* HEADER */}
       <div className="flex items-center gap-3">

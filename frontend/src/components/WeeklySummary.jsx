@@ -10,7 +10,10 @@ export default function WeeklySummary({
 }) {
   if (loading) {
     return (
-      <div className="w-full min-h-[400px] bg-white rounded-2xl border border-gray-200 p-5 shadow-md flex flex-col">
+     <div className="w-full h-full min-h-[400px]
+                bg-white rounded-2xl border border-gray-200
+                p-4 shadow-md flex flex-col">
+
         <div className="flex items-center gap-3 mb-4">
           <div className="h-10 w-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center shadow-md">
             <Calendar className="h-5 w-5 text-white" strokeWidth={2.5} />

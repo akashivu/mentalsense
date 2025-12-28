@@ -3,7 +3,7 @@ import React, { useState } from "react";
 import { motion } from "framer-motion";
 import { register } from "../services/AuthService";
 import { useNavigate } from "react-router-dom";
-
+import BASE from "../api/base";
 
 
 export default function Register() {
@@ -24,7 +24,7 @@ export default function Register() {
   try {
     const res = await register(name, email, password);
 
-    // OPTIONAL (recommended): store auth info if returned
+   
     if (res?.token) localStorage.setItem("token", res.token);
     if (res?.userId) localStorage.setItem("userId", res.userId);
 
@@ -42,9 +42,8 @@ export default function Register() {
 }
 
   const handleGoogleRedirect = () => {
-    const apiBase = import.meta.env.VITE_API_BASE || "http://localhost:8080";
-    window.location.href = `${apiBase}/auth/google`;
-  };
+  window.location.href = `${BASE}/auth/google`;
+};
 
   return (
     <div className="min-h-screen flex">

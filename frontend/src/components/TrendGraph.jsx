@@ -30,7 +30,7 @@ const anomaliesArr = Array.isArray(anomalies) ? anomalies : [];
       a.score ?? a.combinedScore ?? trendValues[idx] ?? null;
   });
 
-  // Human-friendly titles
+  
   const titleText =
     mode === "keystroke"
       ? "Typing Stress Trend"
