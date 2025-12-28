@@ -1,6 +1,6 @@
 
 import React, { useState, useMemo, useRef } from "react";
-import { motion, AnimatePresence, useReducedMotion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase,
   BookOpen,
@@ -58,7 +58,6 @@ const stepTransition = { duration: 0.36, ease: [0.2, 0.9, 0.2, 1] };
 /* ================== main component ================== */
 export default function Onboarding() {
   const [step, setStep] = useState(1);
-  const [direction, setDirection] = useState("forward");
   const [formData, setFormData] = useState({
     name: "",
     focus: "",
@@ -71,7 +70,6 @@ export default function Onboarding() {
 
   const [completed, setCompleted] = useState(false);
   const percent = useMemo(() => Math.round((step / TOTAL_STEPS) * 100), [step]);
-  const shouldReduceMotion = useReducedMotion();
   const inputRef = useRef(null);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [validationMessage, setValidationMessage] = useState("");
@@ -113,8 +111,7 @@ if (
   // clear error
   setValidationMessage("");
   setIsTransitioning(true);
-  setDirection("forward");
-
+  
   if (step === TOTAL_STEPS) {
     setCompleted(true);
     setIsTransitioning(false);
@@ -122,13 +119,12 @@ if (
   }
 
   setStep((prev) => prev + 1);
-  setTimeout(() => setIsTransitioning(false), 400);
+  
 };
 
 
   const handleBack = () => {
     if (step === 1) return;
-    setDirection("backward");
     setStep((prev) => Math.max(1, prev - 1));
   };
 
@@ -311,54 +307,80 @@ if (
         </div>
 
         
-        <div className="flex-1 overflow-y-auto px-6 py-6 lg:px-12">
-          <AnimatePresence mode="wait" initial={false}>
-            <motion.div
-              key={step}
-              initial={shouldReduceMotion ? "center" : direction === "forward" ? "enterFromRight" : "enterFromLeft"}
-              animate="center"
-              exit={shouldReduceMotion ? "center" : direction === "forward" ? "exitToLeft" : "exitToRight"}
-              variants={stepVariants}
-              transition={shouldReduceMotion ? { duration: 0 } : stepTransition}
-              className="max-w-2xl"
-            >
-              {step === 1 && <StepWelcome name={formData.name} onNameChange={(val) => updateField("name", val)} inputRef={inputRef} />}
-              {step === 2 && <StepBenefits />}
-              {step === 3 && <StepHowItWorks />}
-              {step === 4 && <StepPersonalization focus={formData.focus} schedule={formData.schedule} checkIns={formData.checkIns} onChange={updateField} />}
-              {step === 5 && <StepConsent consentData={formData.consentData} consentCoach={formData.consentCoach} onChange={updateField} />}
-              {step === 6 && <StepGoals goal={formData.goal} onChange={(val) => updateField("goal", val)} />}
-            </motion.div>
-          </AnimatePresence>
-        </div>
+       
+         <AnimatePresence>
+  <motion.div
+    key={step}
+    className="flex-1 overflow-y-auto px-6 py-6 lg:px-12"
+    initial={{ opacity: 0, y: 12 }}
+    animate={{ opacity: 1, y: 0 }}
+    exit={{ opacity: 0, y: -8 }}
+    transition={{ duration: 0.25, ease: "easeOut" }}
+    onAnimationComplete={() => setIsTransitioning(false)}
+  >
+    <div className="max-w-2xl">
+      {step === 1 && (
+        <StepWelcome
+          name={formData.name}
+          onNameChange={(val) => updateField("name", val)}
+          inputRef={inputRef}
+        />
+      )}
+      {step === 2 && <StepBenefits />}
+      {step === 3 && <StepHowItWorks />}
+      {step === 4 && (
+        <StepPersonalization
+          focus={formData.focus}
+          schedule={formData.schedule}
+          checkIns={formData.checkIns}
+          onChange={updateField}
+        />
+      )}
+      {step === 5 && (
+        <StepConsent
+          consentData={formData.consentData}
+          consentCoach={formData.consentCoach}
+          onChange={updateField}
+        />
+      )}
+      {step === 6 && (
+        <StepGoals
+          goal={formData.goal}
+          onChange={(val) => updateField("goal", val)}
+        />
+      )}
+    </div>
+  </motion.div>
+</AnimatePresence>
+
+        
 
        
         <div className="border-t border-slate-100 px-6 py-4 lg:px-12 bg-white">
-        <AnimatePresence>
-  {validationMessage && (
-    <motion.div
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, y: 8 }}
-      className="
-        fixed
-        bottom-[calc(env(safe-area-inset-bottom)+88px)]
-        left-1/2
-        -translate-x-1/2
-        bg-gray-900
-        text-white
-        px-4 py-2
-        rounded-xl
-        shadow-xl
-        text-sm
-        z-[100]
-        pointer-events-none
-      "
-    >
-      {validationMessage}
-    </motion.div>
-  )}
-</AnimatePresence>
+   {validationMessage && (
+  <motion.div
+    initial={{ opacity: 0, y: 8 }}
+    animate={{ opacity: 1, y: 0 }}
+    transition={{ duration: 0.2, ease: "easeOut" }}
+    className="
+      fixed
+      bottom-[calc(env(safe-area-inset-bottom)+88px)]
+      left-1/2
+      -translate-x-1/2
+      bg-gray-900
+      text-white
+      px-4 py-2
+      rounded-xl
+      shadow-xl
+      text-sm
+      z-[100]
+      pointer-events-none
+    "
+  >
+    {validationMessage}
+  </motion.div>
+)}
+
 
 
           <div className="flex items-center justify-between max-w-2xl mx-auto">
