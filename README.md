@@ -21,7 +21,20 @@ MentalSense aims to:
 
 All while keeping **user privacy, consent, and transparency** at the core.
 
+
 ---
+###  Research-Informed Design
+
+MentalSense is designed using principles grounded in **well-established and scientifically accepted research** across **keystroke dynamics**, **behavioral biometrics**, and **affective computing**—domains extensively studied in human–computer interaction (HCI) and behavioral science literature.
+
+Rather than relying on ad-hoc heuristics, the system applies **research-backed and peer-reviewed concepts**, including:
+- **Baseline-based behavioral modeling**, where user signals are interpreted relative to a learned personal norm
+- **Keystroke dynamics analysis**, which has been widely studied as an indicator of cognitive load and behavioral variation
+- **Language-based emotional signal extraction**, informed by established affective computing research
+- **Multimodal signal fusion over time**, a commonly accepted approach for improving robustness and reducing noise in behavioral inference systems
+
+These scientifically grounded concepts are translated into a practical, user-facing product with a strong emphasis on **usability, privacy preservation, transparency, and ethical AI design**, rather than clinical diagnosis or medical claims.
+----
 
 ##  Key Features
 - **Full Personalized Experience (Login Required)**
