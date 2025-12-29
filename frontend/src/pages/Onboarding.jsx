@@ -46,14 +46,7 @@ const goalOptions = [
 ];
 
 
-const stepVariants = {
-  enterFromRight: { opacity: 0, x: 20, scale: 0.995 },
-  enterFromLeft: { opacity: 0, x: -20, scale: 0.995 },
-  center: { opacity: 1, x: 0, scale: 1 },
-  exitToLeft: { opacity: 0, x: -12, scale: 0.995 },
-  exitToRight: { opacity: 0, x: 12, scale: 0.995 },
-};
-const stepTransition = { duration: 0.36, ease: [0.2, 0.9, 0.2, 1] };
+
 
 /* ================== main component ================== */
 export default function Onboarding() {
@@ -88,40 +81,41 @@ const handleNext = () => {
   if (isTransitioning) return;
 
   // Step 4 validation
-  if (
-    step === 4 &&
-    (!formData.focus || !formData.schedule || !formData.checkIns)
-  ) {
-    setValidationMessage("Please select all options to continue");
-    return;
+  if (step === 4) {
+    const missing = [];
+    if (!formData.focus) missing.push("focus area");
+    if (!formData.schedule) missing.push("schedule");
+    if (!formData.checkIns) missing.push("check-in preference");
+    
+    if (missing.length > 0) {
+      setValidationMessage(`Please select: ${missing.join(", ")}`);
+      return;
+    }
   }
-if (
-    step === 5 &&
-    (!formData.consentData || !formData.consentCoach)
-  ) {
+  
+  if (step === 5 && (!formData.consentData || !formData.consentCoach)) {
     setValidationMessage("Please accept both consent options to continue");
     return;
   }
-  //  Step 6 validation
+  
   if (step === 6 && !formData.goal) {
     setValidationMessage("Please select a goal to complete setup");
     return;
   }
 
-  // clear error
+  // Clear validation message
   setValidationMessage("");
-  setIsTransitioning(true);
   
+  // Check if completing
   if (step === TOTAL_STEPS) {
     setCompleted(true);
-    setIsTransitioning(false);
     return;
   }
 
+  // Normal step transition
+  setIsTransitioning(true);
   setStep((prev) => prev + 1);
-  
 };
-
 
   const handleBack = () => {
     if (step === 1) return;
@@ -308,7 +302,7 @@ if (
 
         
        
-         <AnimatePresence>
+         <AnimatePresence mode="wait">
   <motion.div
     key={step}
     className="flex-1 overflow-y-auto px-6 py-6 lg:px-12"
@@ -316,7 +310,8 @@ if (
     animate={{ opacity: 1, y: 0 }}
     exit={{ opacity: 0, y: -8 }}
     transition={{ duration: 0.25, ease: "easeOut" }}
-    onAnimationComplete={() => setIsTransitioning(false)}
+    onAnimationStart={() => setIsTransitioning(true)}
+  onAnimationComplete={() => setIsTransitioning(false)}
   >
     <div className="max-w-2xl">
       {step === 1 && (
@@ -356,44 +351,89 @@ if (
         
 
        
-        <div className="border-t border-slate-100 px-6 py-4 lg:px-12 bg-white">
-   {validationMessage && (
-  <motion.div
-    initial={{ opacity: 0, y: 8 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.2, ease: "easeOut" }}
-    className="
-      fixed
-      bottom-[calc(env(safe-area-inset-bottom)+88px)]
-      left-1/2
-      -translate-x-1/2
-      bg-gray-900
-      text-white
-      px-4 py-2
-      rounded-xl
-      shadow-xl
-      text-sm
-      z-[100]
-      pointer-events-none
-    "
-  >
-    {validationMessage}
-  </motion.div>
-)}
+       {/* Footer with buttons */}
+<div className="border-t border-slate-100 px-6 py-4 lg:px-12 bg-white relative z-10">
+  {/* Validation Message */}
+  <AnimatePresence>
+    {validationMessage && (
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -10 }}
+        transition={{ duration: 0.2 }}
+        className="
+          fixed
+          top-20
+          left-1/2
+          -translate-x-1/2
+          max-w-[calc(100vw-2rem)]
+          sm:max-w-md
+          bg-gray-900
+          text-white
+          px-4 py-3
+          rounded-xl
+          shadow-2xl
+          text-sm
+          text-center
+          z-50
+          pointer-events-none
+        "
+      >
+        {validationMessage}
+      </motion.div>
+    )}
+  </AnimatePresence>
 
+  <div className="flex items-center justify-between max-w-2xl mx-auto">
+    <button 
+      onClick={handleBack} 
+      disabled={step === 1}
+      aria-label="Go back to previous step"
+      className={`
+        touch-manipulation 
+        flex items-center gap-2 
+        px-4 py-3
+        rounded-lg 
+        transition-all 
+        font-medium
+        ${step === 1 
+          ? 'text-slate-300 cursor-not-allowed' 
+          : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50'
+        }
+      `}
+    >
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+      </svg>
+      Back
+    </button>
 
-
-          <div className="flex items-center justify-between max-w-2xl mx-auto">
-            <button onClick={handleBack} disabled={step === 1} className={` touch-manipulation flex items-center gap-2 px-4 py-2.5 rounded-lg transition-all font-medium ${ step === 1 ? 'text-slate-300 cursor-not-allowed' : 'text-slate-600 hover:text-slate-900 hover:bg-slate-50' }`}>
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" /></svg> Back
-            </button>
-
-            <motion.button onClick={handleNext} disabled={isNextDisabled} whileHover={isNextDisabled ? {} : { scale: 1.02 }} whileTap={isNextDisabled ? {} : { scale: 0.98 }} className={` touch-manipulation flex items-center gap-2 px-6 py-2.5 rounded-xl font-semibold transition-all ${ isNextDisabled ? 'bg-slate-100 text-slate-400 cursor-not-allowed' : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30' }`}>
-              {step === TOTAL_STEPS ? "Complete Setup" : "Continue"}
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" /></svg>
-            </motion.button>
-          </div>
-        </div>
+    <motion.button 
+      onClick={handleNext} 
+      disabled={isNextDisabled}
+      aria-label={step === TOTAL_STEPS ? "Complete setup" : "Continue to next step"}
+      whileHover={isNextDisabled ? {} : { scale: 1.02 }} 
+      whileTap={isNextDisabled ? {} : { scale: 0.98 }} 
+      className={`
+        touch-manipulation 
+        flex items-center gap-2 
+        px-6 py-3
+        rounded-xl 
+        font-semibold 
+        transition-all
+        ${isNextDisabled 
+          ? 'bg-slate-100 text-slate-400 cursor-not-allowed' 
+          : 'bg-gradient-to-r from-blue-600 to-blue-700 text-white shadow-lg shadow-blue-500/25 hover:shadow-xl hover:shadow-blue-500/30'
+        }
+      `}
+    >
+      {step === TOTAL_STEPS ? "Complete Setup" : "Continue"}
+      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+      </svg>
+    </motion.button>
+  </div>
+</div>
       </div>
     </div>
   );
